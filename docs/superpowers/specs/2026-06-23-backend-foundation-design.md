@@ -224,24 +224,7 @@ ielts-backend/
 
 ---
 
-## 9. Deviations from CLAUDE.md
-
-CLAUDE.md describes an AWS-shaped stack; this design intentionally differs (the
-user's call, for cost). Flagged so the two sources don't silently disagree:
-
-- **Object storage:** Cloudflare **R2** (S3-compatible) instead of AWS S3.
-  `aioboto3` code is unchanged — only the endpoint/credentials differ.
-- **Hosting:** **Fly.io** (compute) + **Cloudflare** (edge) + **Neon** (Postgres)
-  instead of AWS-native.
-- **Async results:** **polling** chosen over the "SSE or polling" CLAUDE.md left open.
-- **New requirement:** freemium tiers + per-skill daily AI-grading quotas (§6).
-
-**Action after spec approval:** offer to update `CLAUDE.md` (via the
-claude-md-management skill) so the project memory matches this design.
-
----
-
-## 10. Open items for implementation planning
+## 9. Open items for implementation planning
 
 - Pick the UUIDv7 library (`uuid-utils` vs `uuid6`).
 - Confirm CORS posture: browser→Next→backend is same-origin (cookie proxy), so
