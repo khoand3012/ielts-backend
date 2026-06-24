@@ -4,6 +4,8 @@ from collections.abc import AsyncIterator, Iterator
 
 import pytest
 import pytest_asyncio
+from asgi_lifespan import LifespanManager
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -49,3 +51,22 @@ async def db_session(_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     async with factory() as session:
         yield session
         await session.rollback()
+
+
+@pytest_asyncio.fixture
+async def app_client(_engine: AsyncEngine) -> AsyncIterator[AsyncClient]:
+    from api.deps import get_db
+    from api.main import create_app
+
+    factory = async_sessionmaker(_engine, expire_on_commit=False)
+
+    async def _override_get_db() -> AsyncIterator[AsyncSession]:
+        async with factory() as session:
+            yield session
+
+    app = create_app()
+    app.dependency_overrides[get_db] = _override_get_db
+    async with LifespanManager(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            yield client
