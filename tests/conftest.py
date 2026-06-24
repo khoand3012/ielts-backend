@@ -62,7 +62,10 @@ async def app_client(_engine: AsyncEngine) -> AsyncIterator[AsyncClient]:
 
     async def _override_get_db() -> AsyncIterator[AsyncSession]:
         async with factory() as session:
-            yield session
+            try:
+                yield session
+            finally:
+                await session.rollback()
 
     app = create_app()
     app.dependency_overrides[get_db] = _override_get_db

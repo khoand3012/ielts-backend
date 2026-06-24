@@ -19,12 +19,18 @@ async def health_check(session: DbSession) -> dict[str, Any]:
         db_status = "down"
 
     redis_status = "ok"
+    client = aioredis.from_url(get_settings().redis_url)  # type: ignore[no-untyped-call]
     try:
-        client = aioredis.from_url(get_settings().redis_url)  # type: ignore[no-untyped-call]
         await client.ping()
-        await client.aclose()
     except Exception:
         redis_status = "down"
+    finally:
+        await client.aclose()
 
-    overall = "ok" if db_status == "ok" else "degraded"
+    if db_status == "down":
+        overall = "down"
+    elif redis_status == "down":
+        overall = "degraded"
+    else:
+        overall = "ok"
     return {"status": overall, "db": db_status, "redis": redis_status}
