@@ -1,3 +1,8 @@
-def test_db_module_imports() -> None:
-    from core.db import async_session_factory, engine, get_session  # noqa: F401
-    from core.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin  # noqa: F401
+# tests/test_db.py
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+async def test_engine_executes_select(db_session: AsyncSession) -> None:
+    result = await db_session.execute(text("SELECT 1"))
+    assert result.scalar_one() == 1
