@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import async_session_factory
-from core.exceptions import AuthError
+from core.exceptions import AuthError, NotFoundError
 from core.models import User
 from core.services.auth import get_user_by_id
 from core.services.security import decode_token
@@ -32,7 +32,10 @@ async def get_current_user(
     payload = decode_token(creds.credentials)
     if payload.get("type") != "access":
         raise AuthError("not an access token")
-    return await get_user_by_id(session, uuid.UUID(str(payload["sub"])))
+    try:
+        return await get_user_by_id(session, uuid.UUID(str(payload["sub"])))
+    except NotFoundError:
+        raise AuthError("invalid credentials") from None
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
