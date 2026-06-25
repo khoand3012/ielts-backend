@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from api.routers import auth as auth_router
 from api.routers import health as health_router
 from core.exceptions import register_exception_handlers
 from core.logging import RequestIdMiddleware, configure_logging
@@ -16,6 +17,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router.router)
+    app.include_router(auth_router.router)
     return app
 
 
