@@ -2,6 +2,7 @@ import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import AuthError, ConflictError, NotFoundError
@@ -22,7 +23,11 @@ async def register(session: AsyncSession, email: str, password: str) -> User:
         raise ConflictError("email already registered")
     user = User(email=email, password_hash=hash_password(password), plan="free")
     session.add(user)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as err:
+        await session.rollback()
+        raise ConflictError("email already registered") from err
     await session.refresh(user)
     return user
 
