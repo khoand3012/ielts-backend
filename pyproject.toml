@@ -60,4 +60,11 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# The session-scoped `_engine` fixture builds an asyncpg pool bound to the loop
+# it was created in. Without pinning both scopes, pytest-asyncio gives fixtures
+# and tests separate function-scoped loops, so every DB call from a test hits a
+# pool owned by a different loop. Both settings are required: pinning only the
+# fixture scope still leaves tests on their own loop.
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
