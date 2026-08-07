@@ -1,0 +1,10 @@
+.superpowers/
+__pycache__/
+*.pyc
+.venv/
+.env
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
