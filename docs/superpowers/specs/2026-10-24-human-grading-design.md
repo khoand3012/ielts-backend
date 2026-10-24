@@ -93,20 +93,22 @@ teacher can **never claim their own test**.
 
 At submission, in **one transaction**:
 
-| Skill | Student choice | Quota consumed | Created | Then |
+| Skill | Student choice | Quota (used at session start) | Created | Then |
 |---|---|---|---|---|
 | Speaking | — (always human) | `speaking` | `HumanGrade(skill=speaking, awaiting_grader)` | teacher queue |
 | Writing | toggle **off** (default) | `writing` | `AIAssessment(processing)` | in-process AI task (foundation spec §5) |
 | Writing | toggle **on** | `writing` | `HumanGrade(skill=writing, awaiting_grader)` | teacher queue; **no AI task** |
 
-- The Writing submit body gets `request_manual_grading: bool = false`. The choice
-  is stored on the `TestSession` as `grading_method` ∈ {`ai`, `human`} and is
-  fixed from then on.
+- The toggle is `TestSession.request_manual_grading` (default false), which the
+  student can change any time before submitting (`PATCH /sessions/{id}`). At
+  submission — by the student or by auto-submit — it fixes
+  `grading_method` ∈ {`ai`, `human`} (`auto` for Reading/Listening).
 - **Daily limits are unchanged and shared** (product owner decision): a manual
   Writing request counts toward the same Writing limit as AI grading (free
   3/day, paid 30/day). Speaking has its own limit (free 3/day, paid 30/day).
-  `entitlements.check_and_consume(user, skill)` runs before anything is created;
-  over limit → `QuotaExceededError` with `resets_at`, nothing created.
+  `entitlements.check_and_consume` runs when the session **starts** (tests &
+  sessions spec §9); over limit → `QuotaExceededError` with `resets_at`, no
+  session created.
 - Reading/Listening are untouched (auto-graded, unlimited).
 
 ### 4.1 AI failure → teacher queue
@@ -245,9 +247,8 @@ Examples: 6.125 → 6.0, 6.25 → 6.5, 6.375 → 6.5, 6.625 → 6.5, 6.75 → 7.
 
 - `users.role` — `String(16)`, default/server_default `student`, check constraint
   on the three values.
-- `test_sessions.grading_method` — `ai | human`, set at submission (Writing:
-  from the toggle; Speaking: always `human`; Reading/Listening: null or `auto`,
-  builder's choice).
+- `test_sessions.grading_method` — `auto | ai | human`, set at submission
+  (Writing: from the toggle; Speaking: always `human`; Reading/Listening: `auto`).
 - `human_grades` — UUIDv7 PK, timestamps (mixins), and:
   - `test_session_id` FK, **unique**
   - `skill` (`speaking` | `writing`), `status`
@@ -311,7 +312,8 @@ New OpenAPI tags `grading` and `admin`; stable `operation_id`s.
 - **AI failure handling** (foundation spec §5, CLAUDE.md "AI grading"): on final
   failure the row is marked `failed` **and handed to the teacher queue** (§4.1),
   instead of `failed` being the end state shown to the student.
-- **Entitlements** unchanged in shape; consumed at submission for both paths.
+- **Entitlements** unchanged in shape; consumed at session start for both paths
+  (changed by the tests & sessions spec).
 - **Roadmap** (foundation spec §7) gains two phases:
   - **Roles & admin users** — `users.role`, `require_role`, CLI bootstrap, admin
     user management. Depends only on Foundation. *(done)*

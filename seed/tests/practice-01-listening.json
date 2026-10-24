@@ -1,0 +1,966 @@
+{
+  "slug": "practice-01-listening",
+  "title": "Practice Test 1 — Listening",
+  "skill": "listening",
+  "content": {
+    "parts": [
+      {
+        "number": 1,
+        "title": "Enrolling on an evening course",
+        "audio": null,
+        "question_groups": [
+          {
+            "type": "fill_blank",
+            "instructions": "Complete the form below. Write ONE WORD AND/OR A NUMBER for each answer.",
+            "word_limit": "ONE WORD AND/OR A NUMBER",
+            "title": "Riverside Community Centre - Course Enrolment Form",
+            "questions": [
+              {
+                "numbers": [
+                  1
+                ],
+                "prompt": "Course: Introduction to ____"
+              },
+              {
+                "numbers": [
+                  2
+                ],
+                "prompt": "Day: ____ evenings"
+              },
+              {
+                "numbers": [
+                  3
+                ],
+                "prompt": "Surname: ____"
+              },
+              {
+                "numbers": [
+                  4
+                ],
+                "prompt": "Postcode: ____"
+              },
+              {
+                "numbers": [
+                  5
+                ],
+                "prompt": "Phone number: ____"
+              },
+              {
+                "numbers": [
+                  6
+                ],
+                "prompt": "Heard about the course from a poster in the ____"
+              },
+              {
+                "numbers": [
+                  7
+                ],
+                "prompt": "Fee (residents' rate): £____"
+              },
+              {
+                "numbers": [
+                  8
+                ],
+                "prompt": "Must bring: an ____"
+              },
+              {
+                "numbers": [
+                  9
+                ],
+                "prompt": "Classes start at: ____ pm"
+              },
+              {
+                "numbers": [
+                  10
+                ],
+                "prompt": "Free parking behind the ____"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "title": "Welcome talk for new volunteers",
+        "audio": null,
+        "question_groups": [
+          {
+            "type": "multiple_choice",
+            "instructions": "Choose the correct letter, A, B or C.",
+            "questions": [
+              {
+                "numbers": [
+                  11
+                ],
+                "prompt": "The visitor centre opened in",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "1998."
+                  },
+                  {
+                    "key": "B",
+                    "text": "2006."
+                  },
+                  {
+                    "key": "C",
+                    "text": "the late 1990s."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  12
+                ],
+                "prompt": "According to the speaker, most visitors come to the reserve to see",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "rare plants."
+                  },
+                  {
+                    "key": "B",
+                    "text": "the woodland in spring."
+                  },
+                  {
+                    "key": "C",
+                    "text": "birds on the wetland."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  13
+                ],
+                "prompt": "Volunteers must bring their own",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "gloves."
+                  },
+                  {
+                    "key": "B",
+                    "text": "boots."
+                  },
+                  {
+                    "key": "C",
+                    "text": "waterproof jackets."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  14
+                ],
+                "prompt": "Volunteers working alone must",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "carry a radio."
+                  },
+                  {
+                    "key": "B",
+                    "text": "tell the office where they will be."
+                  },
+                  {
+                    "key": "C",
+                    "text": "stay close to the visitor centre."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  15
+                ],
+                "prompt": "In the cafe, volunteers receive",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "a free hot drink."
+                  },
+                  {
+                    "key": "B",
+                    "text": "free food."
+                  },
+                  {
+                    "key": "C",
+                    "text": "a twenty per cent discount."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "matching",
+            "instructions": "When does each activity take place? Choose the correct letter, A, B or C, next to Questions 16-20. You may use any letter more than once.",
+            "options": [
+              {
+                "key": "A",
+                "text": "Monday"
+              },
+              {
+                "key": "B",
+                "text": "Wednesday"
+              },
+              {
+                "key": "C",
+                "text": "Saturday"
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  16
+                ],
+                "prompt": "bird counting"
+              },
+              {
+                "numbers": [
+                  17
+                ],
+                "prompt": "path maintenance"
+              },
+              {
+                "numbers": [
+                  18
+                ],
+                "prompt": "hedge planting"
+              },
+              {
+                "numbers": [
+                  19
+                ],
+                "prompt": "guiding school groups"
+              },
+              {
+                "numbers": [
+                  20
+                ],
+                "prompt": "litter picking"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "title": "Tutorial: a presentation on canteen food waste",
+        "audio": null,
+        "question_groups": [
+          {
+            "type": "multiple_choice",
+            "instructions": "Choose TWO letters, A-E.",
+            "questions": [
+              {
+                "numbers": [
+                  21,
+                  22
+                ],
+                "prompt": "Which TWO causes of food waste did the students' research identify as the most important?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "high prices"
+                  },
+                  {
+                    "key": "B",
+                    "text": "large portions"
+                  },
+                  {
+                    "key": "C",
+                    "text": "poor-quality food"
+                  },
+                  {
+                    "key": "D",
+                    "text": "unfamiliar dishes"
+                  },
+                  {
+                    "key": "E",
+                    "text": "lack of time to eat"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "multiple_choice",
+            "instructions": "Choose the correct letter, A, B or C.",
+            "questions": [
+              {
+                "numbers": [
+                  23
+                ],
+                "prompt": "How will the students begin their presentation?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "with some statistics"
+                  },
+                  {
+                    "key": "B",
+                    "text": "with a video clip"
+                  },
+                  {
+                    "key": "C",
+                    "text": "with a question to the audience"
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  24
+                ],
+                "prompt": "What does the tutor say about the figure from the Canadian study?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "It should be removed from the presentation."
+                  },
+                  {
+                    "key": "B",
+                    "text": "It should be presented only as an example."
+                  },
+                  {
+                    "key": "C",
+                    "text": "It should be checked with the catering manager."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  25
+                ],
+                "prompt": "Why does the tutor say the recommendations must be realistic?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "The catering manager will be in the audience."
+                  },
+                  {
+                    "key": "B",
+                    "text": "The presentation will be assessed on them."
+                  },
+                  {
+                    "key": "C",
+                    "text": "Other students have made similar suggestions."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  26
+                ],
+                "prompt": "What does the tutor advise the students to do with their slides?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "add more images"
+                  },
+                  {
+                    "key": "B",
+                    "text": "reduce the number"
+                  },
+                  {
+                    "key": "C",
+                    "text": "use them as a handout"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "matching",
+            "instructions": "What do the students say about each source? Choose FOUR answers from the box and write the correct letter, A-E, next to Questions 27-30.",
+            "options": [
+              {
+                "key": "A",
+                "text": "It was out of date."
+              },
+              {
+                "key": "B",
+                "text": "It was too technical."
+              },
+              {
+                "key": "C",
+                "text": "It gave them the idea for the project."
+              },
+              {
+                "key": "D",
+                "text": "It provided the most useful data."
+              },
+              {
+                "key": "E",
+                "text": "It was difficult to get hold of."
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  27
+                ],
+                "prompt": "the government report"
+              },
+              {
+                "numbers": [
+                  28
+                ],
+                "prompt": "the environmental scientist's article"
+              },
+              {
+                "numbers": [
+                  29
+                ],
+                "prompt": "the documentary"
+              },
+              {
+                "numbers": [
+                  30
+                ],
+                "prompt": "the canteen's records"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "title": "Lecture: the history of the pencil",
+        "audio": null,
+        "question_groups": [
+          {
+            "type": "fill_blank",
+            "instructions": "Complete the notes below. Write ONE WORD AND/OR A NUMBER for each answer.",
+            "word_limit": "ONE WORD AND/OR A NUMBER",
+            "title": "The history of the pencil",
+            "questions": [
+              {
+                "numbers": [
+                  31
+                ],
+                "prompt": "Graphite found in Borrowdale; shepherds used it to mark their ____"
+              },
+              {
+                "numbers": [
+                  32
+                ],
+                "prompt": "People wrongly believed it was a type of ____"
+              },
+              {
+                "numbers": [
+                  33
+                ],
+                "prompt": "Also used to line moulds for making ____"
+              },
+              {
+                "numbers": [
+                  34
+                ],
+                "prompt": "Workers leaving the mine were ____"
+              },
+              {
+                "numbers": [
+                  35
+                ],
+                "prompt": "1795: Conte mixed powdered graphite with ____"
+              },
+              {
+                "numbers": [
+                  36
+                ],
+                "prompt": "The rods were fired in a ____"
+              },
+              {
+                "numbers": [
+                  37
+                ],
+                "prompt": "More clay gives a harder pencil and a ____ line"
+              },
+              {
+                "numbers": [
+                  38
+                ],
+                "prompt": "Hexagonal pencils are less likely to ____ off desks"
+              },
+              {
+                "numbers": [
+                  39
+                ],
+                "prompt": "Eraser on the end of a pencil patented in ____"
+              },
+              {
+                "numbers": [
+                  40
+                ],
+                "prompt": "Yellow paint suggested the graphite came from ____"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "answer_key": {
+    "1": [
+      "pottery"
+    ],
+    "2": [
+      "Wednesday"
+    ],
+    "3": [
+      "Thornbury"
+    ],
+    "4": [
+      "BS7 2LQ",
+      "BS72LQ"
+    ],
+    "5": [
+      "07723 418 590",
+      "07723418590"
+    ],
+    "6": [
+      "library"
+    ],
+    "7": [
+      "145"
+    ],
+    "8": [
+      "apron"
+    ],
+    "9": [
+      "6.45",
+      "6:45"
+    ],
+    "10": [
+      "supermarket"
+    ],
+    "11": [
+      "B"
+    ],
+    "12": [
+      "C"
+    ],
+    "13": [
+      "B"
+    ],
+    "14": [
+      "B"
+    ],
+    "15": [
+      "A"
+    ],
+    "16": [
+      "C"
+    ],
+    "17": [
+      "A"
+    ],
+    "18": [
+      "B"
+    ],
+    "19": [
+      "B"
+    ],
+    "20": [
+      "C"
+    ],
+    "21": [
+      "B",
+      "D"
+    ],
+    "23": [
+      "B"
+    ],
+    "24": [
+      "B"
+    ],
+    "25": [
+      "A"
+    ],
+    "26": [
+      "B"
+    ],
+    "27": [
+      "A"
+    ],
+    "28": [
+      "B"
+    ],
+    "29": [
+      "C"
+    ],
+    "30": [
+      "D"
+    ],
+    "31": [
+      "sheep"
+    ],
+    "32": [
+      "lead"
+    ],
+    "33": [
+      "cannonballs",
+      "cannon-balls"
+    ],
+    "34": [
+      "searched"
+    ],
+    "35": [
+      "clay"
+    ],
+    "36": [
+      "kiln"
+    ],
+    "37": [
+      "lighter"
+    ],
+    "38": [
+      "roll"
+    ],
+    "39": [
+      "1858"
+    ],
+    "40": [
+      "China"
+    ]
+  },
+  "staff_content": {
+    "transcripts": {
+      "1": [
+        {
+          "speaker": "Receptionist",
+          "text": "Good afternoon, Riverside Community Centre. How can I help?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "Hello. I saw some information about your evening courses and I'd like to enrol on one, if there are still places."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Of course. Which course were you interested in?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "Well, I was originally thinking about the watercolour painting course, but I've just read that it's full. So I'd like to try the introduction to pottery instead."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Pottery - yes, we've got a few places left on that one. It runs on two different evenings. The Tuesday group is completely full, I'm afraid, but there's space on Wednesday evenings."
+        },
+        {
+          "speaker": "Helen",
+          "text": "Wednesday's fine. Actually, that suits me better."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Great. Let me take some details. Can I have your name, please?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "Yes, it's Helen Thornbury."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Could you spell the surname for me?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "T-H-O-R-N-B-U-R-Y."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Thank you. And your address?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "It's 14 Marsh Lane, and the postcode is BS7 2LQ."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "BS7... sorry, was that 2LQ?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "That's right. L for London, Q for Queen."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Lovely. And a contact phone number?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "My mobile is best. It's 07723 418 590."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "07723 418 590. And can I ask how you heard about the course? We're trying to find out which of our advertising works."
+        },
+        {
+          "speaker": "Helen",
+          "text": "Well, a friend did mention that you run classes, but it was actually a poster in the library that made me ring."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "The library - that's good to know. Now, the fee. The full price for the ten-week course is one hundred and sixty pounds."
+        },
+        {
+          "speaker": "Helen",
+          "text": "Oh, right."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "But do you live in the borough?"
+        },
+        {
+          "speaker": "Helen",
+          "text": "Yes, I do - Marsh Lane is just round the corner."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "In that case you're entitled to the residents' rate, which is one hundred and forty-five pounds."
+        },
+        {
+          "speaker": "Helen",
+          "text": "That's better. Does that include materials?"
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Yes, the clay and the firing are all included. The only thing you'll need to bring yourself is an apron, because it can get quite messy."
+        },
+        {
+          "speaker": "Helen",
+          "text": "I've got an old one somewhere. What time do classes start?"
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "Most of our evening classes begin at seven, but pottery starts a little earlier, at a quarter to seven, so that there's time to clean up at the end."
+        },
+        {
+          "speaker": "Helen",
+          "text": "Six forty-five. OK. And is there anywhere to park? I'll probably drive."
+        },
+        {
+          "speaker": "Receptionist",
+          "text": "The car park at the front of the centre is for staff only, I'm afraid, but there's free parking behind the supermarket, which is about two minutes' walk away."
+        },
+        {
+          "speaker": "Helen",
+          "text": "Perfect. Thank you so much."
+        }
+      ],
+      "2": [
+        {
+          "speaker": "Sam Price",
+          "text": "Good morning, everyone, and welcome to Hartwell Nature Reserve. My name's Sam Price, and I coordinate the volunteer programme here. Thank you all for giving up your time - we genuinely couldn't manage the reserve without people like you."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Let me start with a little background. The reserve covers about two hundred hectares, and much of it was farmland until the late 1990s. It was bought by a local trust in 1998, but the visitor centre where we're sitting now only opened in 2006. Before that, the only facility was a small hut by the car park."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "People often ask what makes Hartwell special. We do have some rare plants, and the woodland is lovely in spring, but what really draws visitors from across the region is the wetland. Since we restored the lake and the reed beds, the number of wading birds that spend the winter here has risen enormously, and that's what brings most of our visitors."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Now, a few practical points. Most of you will be working outdoors, so please do wear sturdy boots. We'll provide gloves and any tools you need, and there are waterproof jackets in the store room if the weather turns - but we don't have boots in every size, so please bring your own."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Safety is obviously important. If you're working on your own, you must let the office know which area you'll be in before you set off. You don't need to carry a radio - mobile coverage is fine across most of the reserve - but we do need to know where you are."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "As for refreshments, the cafe in the visitor centre gives all volunteers a free hot drink, and you'll get ten per cent off food. Please don't use the staff kitchen, though - it's very small and it's reserved for the rangers."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Right, let me tell you about this month's main activities and when they happen. Bird counting is something many of you were interested in. We do our main survey early on Saturday mornings, when the birds are most active and the paths are quiet."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Path maintenance is a big job after the wet winter. We tried doing it at weekends, but there were too many visitors around, so it now happens on Mondays, when the reserve is closed to the public."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "Then there's hedge planting. That's on Wednesdays, because that's the day the trust's tree nursery can deliver the young plants. Guiding school groups along the children's discovery trail obviously has to fit in with the schools, and most of them visit midweek, so that's also on Wednesdays."
+        },
+        {
+          "speaker": "Sam Price",
+          "text": "And finally, litter picking around the lake. Sadly, that's needed most when the reserve is at its busiest, so we do it on Saturdays, at the end of the day after the visitors have gone home."
+        }
+      ],
+      "3": [
+        {
+          "speaker": "Dr Ellis",
+          "text": "Come in, both of you. So, you wanted to talk about your presentation on food waste?"
+        },
+        {
+          "speaker": "Priya",
+          "text": "Yes, we've done most of the research, but we wanted to check a few things with you."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Fine. Remind me what your main focus is."
+        },
+        {
+          "speaker": "Leo",
+          "text": "We're looking at food waste in the university's own canteens - how much is thrown away, and why."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "And how did you collect your data?"
+        },
+        {
+          "speaker": "Priya",
+          "text": "We'd planned to interview the kitchen staff, but they were too busy during term, so in the end we weighed the waste ourselves at the end of each lunch service for two weeks. We also ran an online survey of students."
+        },
+        {
+          "speaker": "Leo",
+          "text": "We thought about putting cameras in the dining hall to see what people left on their plates, but there were privacy issues."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Sensible. So what did you find were the main causes?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "The biggest one, by far, was portion size. Students said the standard portions were simply too large, especially at lunchtime."
+        },
+        {
+          "speaker": "Priya",
+          "text": "And the second thing that came up again and again was that people bought food and then didn't like it - particularly new dishes on the menu that they hadn't tried before. Price didn't seem to matter much, and surprisingly few people complained about the quality of the food."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Interesting. What about the structure of the presentation? You've got fifteen minutes."
+        },
+        {
+          "speaker": "Priya",
+          "text": "We were going to start with the statistics, but we think that might be a bit dry. So we're going to open with a short video clip of the bins at the end of one lunch service."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "That would certainly get people's attention."
+        },
+        {
+          "speaker": "Leo",
+          "text": "The problem is that the clip is quite long."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Then cut it down. Thirty seconds is plenty. And after that?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "We'll explain our method, then the findings, then our recommendations. I think the canteens should offer two portion sizes - a smaller portion at a lower price. Some universities already do this."
+        },
+        {
+          "speaker": "Priya",
+          "text": "And I'd like to suggest free tasting samples of new dishes, so people can try them before they buy."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Both sound practical. But I'd be careful about the claim in your draft that waste could be cut by half. Where does that figure come from?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "It's from a study at a university in Canada."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "One study isn't enough to support such a definite claim. You can mention it, but present it as an example of what happened in one place, not as a prediction for us."
+        },
+        {
+          "speaker": "Priya",
+          "text": "OK, that makes sense."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Who are you expecting in the audience?"
+        },
+        {
+          "speaker": "Priya",
+          "text": "Mainly students from our course, but the catering manager has said she'll come."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Then make sure your recommendations are realistic. She'll know exactly what's possible in those kitchens. And how many slides have you got?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "About twenty at the moment."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "That's far too many for fifteen minutes. Aim for eight or nine, and put the detailed tables in a handout."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Before you go, I wanted to ask about your sources. You used the government report on food waste?"
+        },
+        {
+          "speaker": "Priya",
+          "text": "Yes, but it was published more than ten years ago, so a lot of the figures are out of date."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "And the article by the environmental scientist?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "That was really hard going - it was full of chemistry about how food breaks down. Much too technical for what we needed."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "What about the documentary?"
+        },
+        {
+          "speaker": "Priya",
+          "text": "That's actually what made us choose this topic in the first place."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "And the canteen's own records?"
+        },
+        {
+          "speaker": "Leo",
+          "text": "They were the best thing we had. They gave us exact figures for how much food was ordered every week."
+        },
+        {
+          "speaker": "Dr Ellis",
+          "text": "Good. Well, it sounds as if you're in good shape."
+        }
+      ],
+      "4": [
+        {
+          "speaker": "Lecturer",
+          "text": "Today I want to look at an object so ordinary that most of us never think about it: the pencil. Its story begins in the sixteenth century in Borrowdale, a valley in the north of England, where a large deposit of a soft, black and unusually pure mineral was discovered. Local shepherds quickly found a use for it - they used it to mark their sheep, so that everyone could tell whose animals were whose."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "At the time, nobody understood what the substance actually was. Because it left a dark mark rather like lead does, people assumed it was a form of lead, and that's why, even today, we talk about 'pencil lead', although pencils have never contained any lead at all. The mineral is, of course, graphite, which is a form of carbon."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "Borrowdale graphite soon became extremely valuable - not only for writing, but also for lining the moulds that were used to make cannonballs. As a result, the mine was closely guarded, and at one stage the workers were searched as they left each day, to make sure that nobody was smuggling any graphite out."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "Pure graphite was too soft and brittle to use on its own, so it was usually wrapped in string or held in a wooden holder. The big breakthrough came in 1795, when a French scientist, Nicolas-Jacques Conte, found a way of making pencils without pure graphite. He mixed powdered graphite with clay, shaped the mixture into thin rods, and then fired them in a kiln - much as you would with pottery. This process had a huge advantage: by changing the proportion of clay, manufacturers could control how hard the pencil was. The more clay you add, the harder the pencil, and the lighter the line it produces."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "Now, pencils come in many shapes, but the most common is hexagonal. Some people find round pencils more comfortable, but a hexagonal pencil is far less likely to roll off a sloping desk, and it's also cheaper to make, because more pencils can be cut from the same block of wood."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "Attaching an eraser to the end of a pencil seems obvious to us now, but the idea wasn't patented until 1858, in the United States. Interestingly, in many European countries pencils are still usually sold without one."
+        },
+        {
+          "speaker": "Lecturer",
+          "text": "And then there's the colour. Why are so many pencils yellow? In the 1890s, one manufacturer painted its pencils yellow to suggest that its graphite came from China, because in China yellow was associated with royalty, and so with quality. The idea caught on, and yellow became the standard colour for pencils in North America."
+        }
+      ]
+    }
+  }
+}

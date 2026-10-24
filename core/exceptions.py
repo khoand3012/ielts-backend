@@ -22,9 +22,22 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class SessionClosedError(ConflictError):
+    """The session is submitted (or past its deadline), so it can't change any more."""
+
+    code = "session_closed"
+
+
 class AuthError(AppError):
     status_code = 401
     code = "unauthorized"
+
+
+class QuotaExceededError(AppError):
+    """Daily Writing/Speaking limit reached; `extra["resets_at"]` says when it resets."""
+
+    status_code = 429
+    code = "quota_exceeded"
 
 
 class ForbiddenError(AppError):
@@ -35,6 +48,12 @@ class ForbiddenError(AppError):
 class ValidationAppError(AppError):
     status_code = 422
     code = "validation_error"
+
+
+class ContentProblemsError(ValidationAppError):
+    """A test version can't be published; `extra["problems"]` lists why."""
+
+    code = "content_problems"
 
 
 def register_exception_handlers(app: FastAPI) -> None:

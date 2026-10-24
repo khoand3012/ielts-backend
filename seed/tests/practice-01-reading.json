@@ -1,0 +1,782 @@
+{
+  "slug": "practice-01-reading",
+  "title": "Practice Test 1 — Reading",
+  "skill": "reading",
+  "content": {
+    "passages": [
+      {
+        "number": 1,
+        "title": "Stone upon Stone: The Craft of Dry-Stone Walling",
+        "paragraphs": [
+          {
+            "label": null,
+            "text": "Anyone who has walked through the hill country of northern Britain will have noticed them: grey walls running for kilometres across the slopes, climbing hills that seem too steep to farm and disappearing into the mist. These walls contain no cement or mortar of any kind. Each one is held together by nothing more than the careful placement of stones and the force of gravity. Built mostly between the late eighteenth and mid-nineteenth centuries, when common land was being divided into private fields, many of them are still standing two hundred years later, which says a great deal about the skill of the people who made them."
+          },
+          {
+            "label": null,
+            "text": "A dry-stone wall is, in fact, two walls leaning against each other. The builder, known as a waller, begins by digging a shallow trench and laying the largest stones, called footings, along the bottom. Two faces of stone are then raised side by side, each sloping slightly inwards - a shape that wallers call the 'batter'. The gap between the faces is packed tightly with small, irregular pieces known as hearting, which prevent the outer stones from moving. At regular intervals, long 'through stones' are laid across the full width of the wall to tie the two faces together. Finally, a row of upright stones, the coping, is placed along the top, its weight pressing the whole structure down."
+          },
+          {
+            "label": null,
+            "text": "Wallers follow a number of rules, passed on from one generation to the next. The most important is 'one over two, two over one': every stone should sit across a joint in the row below, never directly on top of another joint, so that weight is spread evenly. Stones are also laid with their length going into the wall rather than along it, a principle that feels wasteful to beginners, who naturally want to cover as much distance as possible. An experienced waller rarely picks up the same stone twice, judging at a glance where each piece will fit. Even so, progress is slow: a skilled individual with a good supply of local stone might complete around five metres of wall in a day."
+          },
+          {
+            "label": null,
+            "text": "For much of the twentieth century, the craft declined. Farm labour became expensive, and wire fences, which could be put up in a fraction of the time, replaced walls on many farms. Walls that collapsed were often left as heaps of stone, and the number of people able to repair them fell sharply. By the 1970s, some observers feared that the knowledge would disappear altogether within a generation."
+          },
+          {
+            "label": null,
+            "text": "The situation began to change when conservation groups and landowners recognised that the walls were more than just boundaries. Their cracks and crevices provide shelter for insects, small mammals and nesting birds, while the lichens and mosses that grow on the stones support further life. Walls also protect livestock from wind and snow, something a wire fence cannot offer. Grants were introduced to help farmers pay for repairs, and training courses and competitions helped to raise the profile of the craft. Today, professional wallers can earn a reasonable living, and many report that demand for their services is greater than the number of skilled people available."
+          },
+          {
+            "label": null,
+            "text": "Interest has also grown among people with no connection to farming. Garden designers use dry-stone techniques to create features that blend into the landscape, and weekend courses regularly attract office workers looking for a physical, outdoor contrast to their working lives. Some engineers argue that the walls offer lessons for modern construction: because they are built without mortar, they can flex slightly as the ground moves, and their stones can be reused again and again. Critics point out, however, that such methods are too slow and labour-intensive to be practical for most building projects."
+          },
+          {
+            "label": null,
+            "text": "Whatever their future role, dry-stone walls remain one of the most recognisable features of the upland landscape. As one waller put it, 'A good wall is a conversation between the builder and the hillside - and if you listen properly, the hillside tells you where every stone should go.'"
+          }
+        ],
+        "question_groups": [
+          {
+            "type": "multiple_choice",
+            "variant": "true_false_not_given",
+            "instructions": "Do the following statements agree with the information given in Reading Passage 1? Choose TRUE if the statement agrees with the information, FALSE if the statement contradicts the information, or NOT GIVEN if there is no information on this.",
+            "options": [
+              {
+                "key": "TRUE",
+                "text": "TRUE"
+              },
+              {
+                "key": "FALSE",
+                "text": "FALSE"
+              },
+              {
+                "key": "NOT GIVEN",
+                "text": "NOT GIVEN"
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  1
+                ],
+                "prompt": "Dry-stone walls are held together partly by a small amount of mortar."
+              },
+              {
+                "numbers": [
+                  2
+                ],
+                "prompt": "Most of the walls were built while common land was being divided into private fields."
+              },
+              {
+                "numbers": [
+                  3
+                ],
+                "prompt": "The stones at the bottom of a wall are generally the largest."
+              },
+              {
+                "numbers": [
+                  4
+                ],
+                "prompt": "Hearting stones are chosen for their attractive appearance."
+              },
+              {
+                "numbers": [
+                  5
+                ],
+                "prompt": "Beginners often feel that the correct way of laying stones is wasteful."
+              },
+              {
+                "numbers": [
+                  6
+                ],
+                "prompt": "Wire fences were cheaper to buy than the stone needed for walls."
+              },
+              {
+                "numbers": [
+                  7
+                ],
+                "prompt": "There are currently more skilled wallers than there is work for them."
+              }
+            ]
+          },
+          {
+            "type": "fill_blank",
+            "instructions": "Complete the summary below. Choose ONE WORD ONLY from the passage for each answer.",
+            "word_limit": "ONE WORD ONLY",
+            "title": "Why dry-stone walls matter today",
+            "context": "Walls are valuable for wildlife because insects, small mammals and birds can find {8} in them, and the lichens and mosses on the stones support other life. They also protect {9} from bad weather. Financial help in the form of {10} made repairs affordable, while training courses and {11} increased awareness of the craft. Some engineers note that, because there is no mortar, walls can {12} when the ground moves, and the stone can be {13} many times.",
+            "questions": [
+              {
+                "numbers": [
+                  8
+                ],
+                "prompt": null
+              },
+              {
+                "numbers": [
+                  9
+                ],
+                "prompt": null
+              },
+              {
+                "numbers": [
+                  10
+                ],
+                "prompt": null
+              },
+              {
+                "numbers": [
+                  11
+                ],
+                "prompt": null
+              },
+              {
+                "numbers": [
+                  12
+                ],
+                "prompt": null
+              },
+              {
+                "numbers": [
+                  13
+                ],
+                "prompt": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "title": "Why Do We Yawn?",
+        "paragraphs": [
+          {
+            "label": "A",
+            "text": "Yawning is one of the most widespread behaviours in the animal kingdom. Fish yawn, birds yawn, and almost every mammal that has been studied yawns, from mice to elephants. Humans begin remarkably early: ultrasound scans have shown babies yawning in the womb from around eleven weeks after conception, long before they have any experience of tiredness or boredom. A behaviour so common, and so ancient, is likely to serve some purpose - and yet scientists are still debating what that purpose is."
+          },
+          {
+            "label": "B",
+            "text": "For many years, the most widely accepted explanation was that yawning brings extra oxygen into the body, or removes excess carbon dioxide, when breathing has become shallow. The theory seemed to fit everyday experience: people yawn in stuffy rooms and at the end of long, inactive days. When it was finally tested, however, it did not survive. In experiments carried out in the 1980s, volunteers breathed air containing unusually high levels of carbon dioxide, or pure oxygen, and the frequency of their yawning did not change at all."
+          },
+          {
+            "label": "C",
+            "text": "A more recent idea is that yawning helps to cool the brain. A deep yawn draws in a large volume of air and stretches the jaw, which increases blood flow to the head; together, these may carry away excess heat. Supporters of the theory point to studies showing that people yawn more often when the surrounding air is moderate in temperature than when it is very hot or very cold - exactly what would be expected if yawning works best when the incoming air is cooler than the body. In another study, volunteers who held a cold pack against their forehead yawned far less than those who held a warm one."
+          },
+          {
+            "label": "D",
+            "text": "Whatever its original function, yawning has another striking feature: it is contagious. Around half of all adults will yawn after watching someone else do so, and for some people even reading about yawning - as you may be discovering now - is enough to set them off. Interestingly, very young children rarely catch yawns. The tendency usually appears at about the age of four or five, around the time children start to understand that other people have thoughts and feelings different from their own."
+          },
+          {
+            "label": "E",
+            "text": "This timing has led some researchers to suggest that contagious yawning is linked to empathy. In support of this view, studies have found that yawns spread more readily between family members than between friends, and more readily between friends than between strangers. Contagious yawning has also been observed in other social animals, including chimpanzees, and some experiments suggest that pet dogs may even catch yawns from their owners."
+          },
+          {
+            "label": "F",
+            "text": "Many questions remain unanswered. If yawning does cool the brain, it may help us to stay alert, which would explain why people often yawn just before an important event rather than only when they are tired: athletes before a race, musicians before a performance and parachutists before a jump have all been seen yawning. Some scientists now see the yawn as a signal that the body is moving from one state to another - from sleep to waking, or from rest to action. If they are right, the humble yawn may be less a sign of boredom than a way of getting ready."
+          }
+        ],
+        "question_groups": [
+          {
+            "type": "matching",
+            "variant": "headings",
+            "instructions": "Reading Passage 2 has six paragraphs, A-F. Choose the correct heading for each paragraph from the list of headings below.",
+            "options": [
+              {
+                "key": "i",
+                "text": "A behaviour shared across species and ages"
+              },
+              {
+                "key": "ii",
+                "text": "An early explanation that failed a test"
+              },
+              {
+                "key": "iii",
+                "text": "Temperature and the brain"
+              },
+              {
+                "key": "iv",
+                "text": "Why tired people sleep for longer"
+              },
+              {
+                "key": "v",
+                "text": "Catching yawns from others"
+              },
+              {
+                "key": "vi",
+                "text": "How closeness affects the spread of yawns"
+              },
+              {
+                "key": "vii",
+                "text": "A sign that the body is changing state?"
+              },
+              {
+                "key": "viii",
+                "text": "The dangers of yawning too much"
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  14
+                ],
+                "prompt": "Paragraph A"
+              },
+              {
+                "numbers": [
+                  15
+                ],
+                "prompt": "Paragraph B"
+              },
+              {
+                "numbers": [
+                  16
+                ],
+                "prompt": "Paragraph C"
+              },
+              {
+                "numbers": [
+                  17
+                ],
+                "prompt": "Paragraph D"
+              },
+              {
+                "numbers": [
+                  18
+                ],
+                "prompt": "Paragraph E"
+              },
+              {
+                "numbers": [
+                  19
+                ],
+                "prompt": "Paragraph F"
+              }
+            ]
+          },
+          {
+            "type": "multiple_choice",
+            "instructions": "Choose the correct letter, A, B, C or D.",
+            "questions": [
+              {
+                "numbers": [
+                  20
+                ],
+                "prompt": "The experiments described in paragraph B showed that",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "people yawn more in stuffy rooms."
+                  },
+                  {
+                    "key": "B",
+                    "text": "shallow breathing makes people yawn."
+                  },
+                  {
+                    "key": "C",
+                    "text": "changing the gases people breathed did not affect how often they yawned."
+                  },
+                  {
+                    "key": "D",
+                    "text": "yawning removes carbon dioxide from the body."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  21
+                ],
+                "prompt": "According to paragraph C, people were less likely to yawn when",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "the air around them was moderate in temperature."
+                  },
+                  {
+                    "key": "B",
+                    "text": "they held something cold against their forehead."
+                  },
+                  {
+                    "key": "C",
+                    "text": "they held something warm against their forehead."
+                  },
+                  {
+                    "key": "D",
+                    "text": "they had recently exercised."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  22
+                ],
+                "prompt": "What does the writer say about very young children?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "They yawn more often than adults."
+                  },
+                  {
+                    "key": "B",
+                    "text": "They rarely yawn in response to others yawning."
+                  },
+                  {
+                    "key": "C",
+                    "text": "They yawn mainly when they are bored."
+                  },
+                  {
+                    "key": "D",
+                    "text": "They cannot understand why people yawn."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  23
+                ],
+                "prompt": "The examples of athletes, musicians and parachutists are given to support the idea that yawning",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "is a sign of nervousness."
+                  },
+                  {
+                    "key": "B",
+                    "text": "is more common among active people."
+                  },
+                  {
+                    "key": "C",
+                    "text": "may happen as the body prepares for action."
+                  },
+                  {
+                    "key": "D",
+                    "text": "can be controlled with practice."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "fill_blank",
+            "instructions": "Complete the sentences below. Choose NO MORE THAN TWO WORDS AND/OR A NUMBER from the passage for each answer.",
+            "word_limit": "NO MORE THAN TWO WORDS AND/OR A NUMBER",
+            "questions": [
+              {
+                "numbers": [
+                  24
+                ],
+                "prompt": "Ultrasound scans show that babies yawn before birth, from about ____ weeks after conception."
+              },
+              {
+                "numbers": [
+                  25
+                ],
+                "prompt": "People yawn most often when the air around them is ____ in temperature."
+              },
+              {
+                "numbers": [
+                  26
+                ],
+                "prompt": "For some people, even ____ about yawning is enough to make them yawn."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "title": "Designing Cities for Walking",
+        "paragraphs": [
+          {
+            "label": null,
+            "text": "For most of the twentieth century, the car shaped the modern city. Roads were widened, junctions were redesigned to keep traffic flowing, and new neighbourhoods were built on the assumption that every household would drive. Walking, meanwhile, came to be treated as a leftover activity - something people did in the short gaps between the car park and the front door. In recent years, however, a growing number of planners have argued that this order of priorities should be reversed, and that a city which is pleasant to walk in is likely to be healthier, more prosperous and more sociable than one built around the car."
+          },
+          {
+            "label": null,
+            "text": "The health argument is the easiest to make. Regular walking reduces the risk of heart disease, type 2 diabetes and depression, and, unlike going to a gym, it can be built into daily routines without extra time or expense. Studies in several countries have found that people who live in neighbourhoods where shops, schools and parks are within easy reach on foot tend to be more physically active than those in car-dependent suburbs, even when differences in income and age are taken into account. It would be a mistake, though, to assume that people will walk simply because walking is good for them; most choose to walk only when it is the most convenient way of getting where they want to go."
+          },
+          {
+            "label": null,
+            "text": "The economic case is less obvious but, to my mind, equally strong. Shopkeepers frequently oppose plans to remove parking spaces or close streets to traffic, believing that most of their customers arrive by car. When such changes have been made, though, the results have often surprised them. Pedestrians tend to spend less per visit than drivers, but they visit more often, and over a month they frequently spend more in total. Streets with wide pavements, trees and places to sit also encourage people to linger, and lingering customers are good for business."
+          },
+          {
+            "label": null,
+            "text": "What, then, makes a place walkable? Distance matters, but so does the quality of the journey. People will happily walk a kilometre along a lively street with shop windows, other pedestrians and occasional places to rest, yet they will avoid a walk of half that length beside a busy road with narrow pavements and long waits at crossings. Small details can have a disproportionate effect: the length of time a pedestrian light stays green, the presence of shade on hot days, or simply whether the most direct route is blocked by a fence."
+          },
+          {
+            "label": null,
+            "text": "Critics of the walkable-city movement raise some reasonable objections. They point out that not everyone can walk long distances, and that older people, disabled people and parents with young children may depend on cars more than others. They also warn that improving a neighbourhood can push up property prices, forcing out the very residents who were supposed to benefit. These concerns deserve to be taken seriously, but I do not believe they are arguments against walkable design itself. Rather, they show that it must be combined with good public transport and with policies that protect affordable housing."
+          },
+          {
+            "label": null,
+            "text": "Perhaps the most encouraging lesson from cities that have made progress is that change does not need to be dramatic or expensive. Temporary measures - painting a car-free area on a road, placing benches and planters in a former parking space, or closing a street to traffic on Sundays - allow residents to experience the difference before permanent decisions are made. In many cases, initial opposition has faded once people have seen the results for themselves. Such trials also give planners valuable information about how people actually behave, which is not always what their models predict."
+          },
+          {
+            "label": null,
+            "text": "None of this means that cars will disappear from cities, nor should it. Deliveries, emergency services and many individual journeys will continue to depend on them. The question is not whether to ban the car, but how much space and priority it should be given. For decades the answer was 'as much as possible'. A more balanced answer, I would argue, is long overdue."
+          }
+        ],
+        "question_groups": [
+          {
+            "type": "multiple_choice",
+            "instructions": "Choose the correct letter, A, B, C or D.",
+            "questions": [
+              {
+                "numbers": [
+                  27
+                ],
+                "prompt": "In the first paragraph, the writer says that during the twentieth century walking was",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "encouraged by most city planners."
+                  },
+                  {
+                    "key": "B",
+                    "text": "more popular in new neighbourhoods."
+                  },
+                  {
+                    "key": "C",
+                    "text": "treated as less important than driving."
+                  },
+                  {
+                    "key": "D",
+                    "text": "made safer by wider roads."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  28
+                ],
+                "prompt": "According to the second paragraph, people are most likely to walk when",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "they understand the health benefits."
+                  },
+                  {
+                    "key": "B",
+                    "text": "walking is the most convenient way to reach their destination."
+                  },
+                  {
+                    "key": "C",
+                    "text": "they cannot afford to go to a gym."
+                  },
+                  {
+                    "key": "D",
+                    "text": "they live in a car-dependent suburb."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  29
+                ],
+                "prompt": "What does the writer say about pedestrians as customers?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "Over a longer period, they often spend more than drivers."
+                  },
+                  {
+                    "key": "B",
+                    "text": "They spend more than drivers on each visit."
+                  },
+                  {
+                    "key": "C",
+                    "text": "They rarely stay long in shopping streets."
+                  },
+                  {
+                    "key": "D",
+                    "text": "Shopkeepers value them more than drivers."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  30
+                ],
+                "prompt": "The example of the one-kilometre walk is used to show that",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "most people prefer short journeys."
+                  },
+                  {
+                    "key": "B",
+                    "text": "busy roads should be made narrower."
+                  },
+                  {
+                    "key": "C",
+                    "text": "people walk faster on lively streets."
+                  },
+                  {
+                    "key": "D",
+                    "text": "the experience of a route matters as well as its length."
+                  }
+                ]
+              },
+              {
+                "numbers": [
+                  31
+                ],
+                "prompt": "What point does the writer make about temporary measures?",
+                "options": [
+                  {
+                    "key": "A",
+                    "text": "They are usually more expensive than permanent ones."
+                  },
+                  {
+                    "key": "B",
+                    "text": "They can reduce opposition to change."
+                  },
+                  {
+                    "key": "C",
+                    "text": "They confirm what planners' models predict."
+                  },
+                  {
+                    "key": "D",
+                    "text": "They are unpopular with residents."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "multiple_choice",
+            "variant": "yes_no_not_given",
+            "instructions": "Do the following statements agree with the claims of the writer in Reading Passage 3? Choose YES if the statement agrees with the claims of the writer, NO if the statement contradicts the claims of the writer, or NOT GIVEN if it is impossible to say what the writer thinks about this.",
+            "options": [
+              {
+                "key": "YES",
+                "text": "YES"
+              },
+              {
+                "key": "NO",
+                "text": "NO"
+              },
+              {
+                "key": "NOT GIVEN",
+                "text": "NOT GIVEN"
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  32
+                ],
+                "prompt": "The health benefits of walking are easier to argue for than the economic benefits."
+              },
+              {
+                "numbers": [
+                  33
+                ],
+                "prompt": "Shopkeepers are usually right to oppose the removal of parking spaces."
+              },
+              {
+                "numbers": [
+                  34
+                ],
+                "prompt": "Walking routes in hot countries should always be fully covered."
+              },
+              {
+                "numbers": [
+                  35
+                ],
+                "prompt": "The objections raised by critics show that walkable design should be abandoned."
+              },
+              {
+                "numbers": [
+                  36
+                ],
+                "prompt": "Planners' models usually overestimate how many people will walk."
+              }
+            ]
+          },
+          {
+            "type": "matching",
+            "variant": "sentence_endings",
+            "instructions": "Complete each sentence with the correct ending, A-F.",
+            "options": [
+              {
+                "key": "A",
+                "text": "may make housing too expensive for existing residents."
+              },
+              {
+                "key": "B",
+                "text": "are often more physically active than people in car-dependent areas."
+              },
+              {
+                "key": "C",
+                "text": "should be designed mainly for delivery vehicles."
+              },
+              {
+                "key": "D",
+                "text": "lets residents try out a change before it becomes permanent."
+              },
+              {
+                "key": "E",
+                "text": "encourage people to spend longer in a street."
+              },
+              {
+                "key": "F",
+                "text": "rarely affects how much people spend."
+              }
+            ],
+            "questions": [
+              {
+                "numbers": [
+                  37
+                ],
+                "prompt": "People who live within easy reach of shops, schools and parks"
+              },
+              {
+                "numbers": [
+                  38
+                ],
+                "prompt": "Wide pavements, trees and places to sit"
+              },
+              {
+                "numbers": [
+                  39
+                ],
+                "prompt": "Improving a neighbourhood"
+              },
+              {
+                "numbers": [
+                  40
+                ],
+                "prompt": "Closing a street to traffic on Sundays"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "answer_key": {
+    "1": [
+      "FALSE"
+    ],
+    "2": [
+      "TRUE"
+    ],
+    "3": [
+      "TRUE"
+    ],
+    "4": [
+      "NOT GIVEN"
+    ],
+    "5": [
+      "TRUE"
+    ],
+    "6": [
+      "NOT GIVEN"
+    ],
+    "7": [
+      "FALSE"
+    ],
+    "8": [
+      "shelter"
+    ],
+    "9": [
+      "livestock"
+    ],
+    "10": [
+      "grants"
+    ],
+    "11": [
+      "competitions"
+    ],
+    "12": [
+      "flex"
+    ],
+    "13": [
+      "reused"
+    ],
+    "14": [
+      "i"
+    ],
+    "15": [
+      "ii"
+    ],
+    "16": [
+      "iii"
+    ],
+    "17": [
+      "v"
+    ],
+    "18": [
+      "vi"
+    ],
+    "19": [
+      "vii"
+    ],
+    "20": [
+      "C"
+    ],
+    "21": [
+      "B"
+    ],
+    "22": [
+      "B"
+    ],
+    "23": [
+      "C"
+    ],
+    "24": [
+      "eleven",
+      "11"
+    ],
+    "25": [
+      "moderate"
+    ],
+    "26": [
+      "reading"
+    ],
+    "27": [
+      "C"
+    ],
+    "28": [
+      "B"
+    ],
+    "29": [
+      "A"
+    ],
+    "30": [
+      "D"
+    ],
+    "31": [
+      "B"
+    ],
+    "32": [
+      "YES"
+    ],
+    "33": [
+      "NO"
+    ],
+    "34": [
+      "NOT GIVEN"
+    ],
+    "35": [
+      "NO"
+    ],
+    "36": [
+      "NOT GIVEN"
+    ],
+    "37": [
+      "B"
+    ],
+    "38": [
+      "E"
+    ],
+    "39": [
+      "A"
+    ],
+    "40": [
+      "D"
+    ]
+  }
+}

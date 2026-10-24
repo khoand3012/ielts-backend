@@ -5,10 +5,11 @@ Reading/Listening, and orchestrates grading of Writing (AI via OpenRouter) and S
 
 The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API exposed here.
 
-> **Status:** Foundation phase. Implemented: auth (register/login/refresh/logout/me), account roles
-> with admin user management, the first-admin CLI, IELTS band arithmetic, and health checks.
-> Not yet built: test content, sessions, auto-grading, AI grading, human (teacher) grading,
-> entitlements, and media uploads.
+> **Status:** Implemented: auth (register/login/refresh/logout/me), account roles with admin user
+> management, IELTS band arithmetic, versioned single-skill tests loaded by CLI, test sessions
+> (practice/exam, autosave, server deadlines, auto-submit), Writing/Speaking daily limits, and
+> health checks. Not yet built: scoring (auto, AI, teacher), admin test upload (AI import),
+> student recording uploads (Speaking sessions can't start until then).
 
 ## Stack
 
@@ -110,6 +111,7 @@ After that, admins manage other users' roles through `PATCH /admin/users/{user_i
 | `uv run uvicorn api.main:app --reload` | Run the API |
 | `uv run alembic upgrade head` | Apply migrations |
 | `uv run python -m core.cli set-role <email> <role>` | Set a user's role (`student`/`teacher`/`admin`) |
+| `uv run python -m core.cli load-test <file.json> [--publish]` | Load a test as a draft (and publish it if it has no problems) |
 | `uv run alembic revision --autogenerate -m "msg"` | Create a migration |
 | `uv run pytest` | Run tests |
 | `uv run ruff check . && uv run ruff format --check . && uv run mypy .` | Lint, format, type check |
@@ -137,6 +139,11 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `FREE_SPEAKING_DAILY` | no | `3` | Free-tier Speaking assessments per day |
 | `PAID_WRITING_DAILY` | no | `30` | Paid-tier Writing assessments per day |
 | `PAID_SPEAKING_DAILY` | no | `30` | Paid-tier Speaking assessments per day |
+| `READING_TIME_LIMIT_MINUTES` / `LISTENING_…` / `WRITING_…` / `SPEAKING_…` | no | `60` / `32` / `60` / `20` | Exam-mode time limits |
+| `SESSION_GRACE_SECONDS` | no | `30` | Saves this long after the deadline still count |
+| `AUTO_SUBMIT_ENABLED` | no | `true` | Run the in-process loop that submits expired exam sessions |
+| `AUTO_SUBMIT_INTERVAL_SECONDS` | no | `60` | How often that loop runs |
+| `SIGNED_URL_TTL_SECONDS` | no | `14400` | Lifetime of signed asset URLs in test content (longer than the longest exam) |
 
 Never commit a real `.env`.
 
@@ -152,6 +159,14 @@ Never commit a real `.env`.
 | `GET` | `/auth/me` | Current user (requires bearer token) |
 | `GET` | `/admin/users` | Admin: list/search users (`q`, `role`, `limit` ≤ 100, `offset`) |
 | `PATCH` | `/admin/users/{user_id}` | Admin: change a user's `role` and/or `plan` |
+| `GET` | `/tests` | Published tests (`skill`, `limit`, `offset`); no content |
+| `GET` | `/tests/{test_id}` | One published test's summary |
+| `POST` | `/sessions` | Start a session (`test_id`, `mode`); returns content without answers. 429 over the daily limit |
+| `GET` | `/sessions` | My sessions, newest first |
+| `GET` | `/sessions/{id}` | Session + content + saved answers (resume) |
+| `PUT` | `/sessions/{id}/answers` | Autosave answers (`null` clears one); 409 once closed |
+| `PATCH` | `/sessions/{id}` | Writing: `request_manual_grading` |
+| `POST` | `/sessions/{id}/submit` | Submit early |
 
 Access tokens live 15 minutes, refresh tokens 30 days. Refresh tokens **rotate on use** — the
 presented token is revoked as the new pair is issued, so replaying an old one returns 401.
