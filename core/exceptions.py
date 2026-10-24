@@ -37,6 +37,12 @@ class ValidationAppError(AppError):
     code = "validation_error"
 
 
+class ContentProblemsError(ValidationAppError):
+    """A test version can't be published; `extra["problems"]` lists why."""
+
+    code = "content_problems"
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _handle_app_error(_: Request, exc: AppError) -> JSONResponse:
