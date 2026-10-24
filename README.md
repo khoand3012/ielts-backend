@@ -5,8 +5,8 @@ Reading/Listening, and orchestrates grading of Writing (Claude) and Speaking.
 
 The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API exposed here.
 
-> **Status:** Foundation phase. Auth (register/login/refresh/logout/me) and health checks are
-> implemented. Test content, sessions, grading, AI assessment, and entitlements are not yet built.
+> **Status:** Foundation phase. Auth (register/login/refresh/logout/me), account roles with admin
+> user management, and health checks are implemented. Test content, sessions, grading, AI assessment, and entitlements are not yet built.
 
 ## Stack
 
@@ -131,9 +131,15 @@ Never commit a real `.env`.
 | `POST` | `/auth/refresh` | Rotate a refresh token for a new pair |
 | `POST` | `/auth/logout` | Revoke a refresh token (204) |
 | `GET` | `/auth/me` | Current user (requires bearer token) |
+| `GET` | `/admin/users` | Admin: list/search users (`q`, `role`, `limit` ≤ 100, `offset`) |
+| `PATCH` | `/admin/users/{user_id}` | Admin: change a user's `role` and/or `plan` |
 
 Access tokens live 15 minutes, refresh tokens 30 days. Refresh tokens **rotate on use** — the
 presented token is revoked as the new pair is issued, so replaying an old one returns 401.
+
+**Roles** — `student` (every new sign-up), `teacher`, `admin`. User responses include `role`. Only
+admins change roles (and cannot demote themselves); a role change applies on the user's next
+request, with no re-login.
 
 `/health` returns `ok` when Postgres responds and `down` when it is unreachable.
 

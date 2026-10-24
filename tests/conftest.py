@@ -1,6 +1,7 @@
 # tests/conftest.py
 import os
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 import pytest_asyncio
@@ -13,6 +14,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from testcontainers.postgres import PostgresContainer
+from uuid_utils.compat import uuid7
+
+if TYPE_CHECKING:
+    from core.models import Role, User
 
 # Set required env BEFORE any test imports a core.* module that calls
 # get_settings() at import time. Placeholder values are fine: the real DB tests
@@ -71,3 +76,25 @@ async def app_client(_engine: AsyncEngine) -> AsyncIterator[AsyncClient]:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
+
+
+@pytest_asyncio.fixture
+async def make_user(
+    _engine: AsyncEngine,
+) -> Callable[..., Awaitable[tuple["User", str]]]:
+    """Create a committed user with a unique email and the given role; return it with an
+    access token."""
+    from core.models import Role
+    from core.services import auth
+    from core.services.security import create_access_token
+
+    factory = async_sessionmaker(_engine, expire_on_commit=False)
+
+    async def _make(role: "Role" = Role.STUDENT) -> tuple["User", str]:
+        async with factory() as session:
+            user = await auth.register(session, f"{role}-{uuid7()}@t.com", "password123")
+            user.role = role
+            await session.commit()
+        return user, create_access_token(str(user.id))
+
+    return _make
