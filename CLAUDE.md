@@ -1,6 +1,6 @@
 # IELTS Practice — Backend
 
-Python backend for an IELTS practice platform. Serves test content, manages sessions, auto-grades Reading/Listening, and orchestrates AI-graded Writing/Speaking via Claude + Whisper.
+Python backend for an IELTS practice platform. Serves test content, manages sessions, auto-grades Reading/Listening, and orchestrates grading of Writing (AI via OpenRouter) and Speaking.
 
 The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST API consumed by it.
 
@@ -10,12 +10,10 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 - **Web framework**: FastAPI (async)
 - **ORM**: SQLAlchemy 2.0 (async) with Alembic migrations
 - **Validation**: Pydantic v2 schemas
-- **Database**: PostgreSQL 15+
-- **Cache + queue broker**: Redis 7+
-- **Background jobs**: ARQ (async Redis queue) for AI assessment jobs
+- **Database**: PostgreSQL 15+ (also the record of AI grading job state — no Redis/queue in v1)
+- **Background jobs**: in-process `asyncio` tasks inside the API (FastAPI `BackgroundTasks`) for AI assessment
 - **Object storage**: Cloudflare R2 (S3-compatible) via `aioboto3` (audio uploads, test assets) — only the endpoint/credentials differ from S3; code is identical
-- **AI grading**: Anthropic SDK (`anthropic`) — model `claude-sonnet-4-6`
-- **Speech-to-Text**: OpenAI Whisper API (for Speaking transcription)
+- **AI grading**: OpenRouter (OpenAI-compatible chat completions API) via `httpx.AsyncClient` — default model `deepseek/deepseek-v4.1-flash-1017`, overridable with `AI_MODEL`
 - **Auth**: JWT (access + refresh) via `python-jose`; passwords with `argon2-cffi`
 - **Dependency / packaging**: `uv` (fast resolver) + `pyproject.toml`
 - **Lint / format**: `ruff` (lint + format) + `mypy` (strict)
@@ -23,23 +21,21 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 
 ## Architecture
 
-Modular monolith plus a separate AI worker process — two deployables:
+**Simple modular monolith — one deployable, one process.** The FastAPI app (`api/`) handles everything: auth, tests, sessions, auto-grading, progress, media, and AI grading. Business logic lives in `core/` (models, schemas, services, db, settings, ai).
 
-1. **`api/`** — FastAPI app handling auth, tests, sessions, auto-grading, progress, media
-2. **`worker/`** — ARQ worker consuming jobs from Redis; runs Whisper STT + Claude evaluation
+AI grading (model evaluation via OpenRouter) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (`processing → ready | failed`), so no Redis or queue is needed.
 
-Both share the same `core/` package (models, schemas, db, settings).
+> **Deferred until scaling is needed:** a separate worker process + job queue (e.g. ARQ on Redis). The grading code lives in `core/services/` precisely so it can later be called from a worker instead of a background task without rewriting it.
 
 ### Hosting
 
-Cost-optimized, Cloudflare-centric (Cloudflare's own compute can't run this stack — async Python + native deps + always-on ARQ worker — so the Python processes run behind it):
+Cost-optimized, Cloudflare-centric (Cloudflare's own compute can't run async Python + native deps, so the Python process runs behind it):
 
-- **Compute**: Fly.io — one image, two processes (`api` web + `worker` always-on ARQ), scaled independently
+- **Compute**: Fly.io — one image, one process (`api`), exactly one always-on machine (the startup grading sweep assumes this)
 - **Edge / CDN / TLS / WAF**: Cloudflare in front of the API; serves R2 assets via signed URLs
 - **Postgres**: Neon, **pooled endpoint** (`-pooler` host, PgBouncer transaction mode) — required for async connection-pool safety. Not Hyperdrive (Workers-only binding, unreachable from Fly)
-- **Redis**: co-located on Fly (volume + AOF persistence) or Upstash
 - **Migrations**: Alembic run as a Fly release command — never on boot, never `create_all()`
-- **Local parity**: Docker Compose runs Postgres + Redis + MinIO (R2/S3-compatible stand-in)
+- **Local parity**: Docker Compose runs Postgres + MinIO (R2/S3-compatible stand-in)
 
 ```
 backend/
@@ -47,16 +43,13 @@ backend/
 │   ├── routers/          # endpoint modules per domain
 │   ├── deps.py           # FastAPI dependencies (auth, db session)
 │   └── main.py
-├── worker/               # ARQ worker
-│   ├── tasks/            # job handlers (grade_writing, grade_speaking)
-│   └── main.py
-├── core/                 # shared
+├── core/                 # business logic
 │   ├── models/           # SQLAlchemy models
 │   ├── schemas/          # Pydantic schemas
 │   ├── services/         # business logic (grading, AI prompts)
 │   ├── db.py             # async engine + session factory
 │   ├── settings.py       # Pydantic Settings (env vars)
-│   └── ai/               # Claude + Whisper clients, prompts, rubrics
+│   └── ai/               # OpenRouter client, prompts, rubrics
 ├── alembic/              # migrations
 ├── tests/
 └── pyproject.toml
@@ -64,14 +57,25 @@ backend/
 
 ## Key domain concepts
 
-- **User** — has a `plan` (`free` | `paid`) that gates AI-graded test volume (see Freemium)
+- **User** — has a `plan` (`free` | `paid`) that gates Writing/Speaking test volume (see Freemium) and a `role` (`student` | `teacher` | `admin`, see Roles)
 - **Test** — a complete IELTS test (one of: full / reading / listening / writing / speaking)
 - **Section** — within a test (e.g. Reading has 3 passages, Listening has 4 sections)
 - **Question** — typed (multiple_choice, fill_blank, matching, short_answer, essay_task1, essay_task2, speaking_part1/2/3)
-- **TestSession** — a user's attempt at a test; tracks `started_at`, `submitted_at`, status
-- **Answer** — user's response to a question; for auto-graded types, scored synchronously; for AI-graded, points to an `AIAssessment` row
-- **AIAssessment** — band scores per criterion + overall + feedback text; populated asynchronously by worker. The frontend **polls** the results/assessment endpoint until status flips `processing → ready` (no SSE/WebSocket in v1)
-- **Entitlement** — per-user, per-skill daily counter for AI-graded tests (see Freemium)
+- **TestSession** — a user's attempt at a test; tracks `started_at`, `submitted_at`, status, and `grading_method` (`ai` | `human`, set at submission)
+- **Answer** — user's response to a question; for auto-graded types, scored synchronously; AI-graded Writing points to an `AIAssessment` row; human-graded sessions have a `HumanGrade`
+- **AIAssessment** — Writing only. Band scores per criterion + overall + feedback text; populated asynchronously by an in-process background task. The frontend **polls** the result endpoint, where students only ever see `being_graded → graded` (no SSE/WebSocket in v1)
+- **HumanGrade** — one per human-graded session (all Speaking; Writing on request or after AI failure); `awaiting_grader → claimed → graded`; `origin` ∈ `speaking | student_request | ai_fallback`
+- **Entitlement** — per-user, per-skill daily counter for Writing and Speaking tests (see Freemium)
+
+## Roles & human grading
+
+Full design: `docs/superpowers/specs/2026-10-24-human-grading-design.md`.
+
+- **Roles** — `student` takes tests and sees own results; `teacher` grades from the queue; `admin` does everything a teacher can, sees all results, manages users and claims, and sees the grading overview
+- **Speaking** is always graded by a teacher. **Writing** is graded by AI unless the student sets `request_manual_grading` at submission — then it goes to the teacher queue instead
+- **One shared queue** (oldest first) with an atomic claim so no two teachers grade the same test; drafts are private until the grade is submitted; admins can release or reassign stuck claims
+- **AI failure** — a Writing test whose AI grading fails all 3 attempts drops into the teacher queue (`AI_FAILURE_FALLBACK_TO_TEACHER`, default on)
+- **Bands** — criteria in half-band steps (0–9); overall uses the British Council rounding rule (nearest half band, .25/.75 round up); Writing weights Task 2 double. All arithmetic lives in `core/services/bands.py`
 
 ## Conventions
 
@@ -82,45 +86,46 @@ backend/
 - **Time** stored as `TIMESTAMPTZ` (UTC) in Postgres; never naive datetimes
 - **IDs** UUIDv7 (sortable) for primary keys, not auto-increment integers
 - **Errors** raise typed exceptions in services; an exception handler maps them to HTTP responses — do not raise `HTTPException` from services
-- **Tests** prefer integration tests against a real Postgres over mocks; mock only external APIs (Anthropic, OpenAI, R2)
+- **Tests** prefer integration tests against a real Postgres over mocks; mock only external APIs (OpenRouter, R2)
 - **No print/logger.info debugging** left in committed code — use structured logging via `structlog`
 
 ## AI grading
 
+AI grading covers **Writing only** (Speaking is graded by teachers).
+
 - Prompts and IELTS band rubrics live in `core/ai/prompts/` — version them, do not inline in service code
-- **Prompt caching is mandatory** — the IELTS rubric system prompt is large and reused on every grading call; mark it with `cache_control` to cut cost and latency dramatically
-- Claude is called with **structured outputs** (tool use) to return JSON: per-criterion band scores + overall + feedback bullets
-- Writing: send full text to Claude
-- Speaking: download audio from R2 → Whisper transcribe → send transcript + IELTS speaking rubric to Claude
+- **Prompt caching is mandatory** — the IELTS rubric system prompt is large and reused on every grading call; send it as an identical, unchanging prefix (system message first, student text last) so the provider's automatic prefix caching applies (DeepSeek caches repeated prefixes automatically). If `AI_MODEL` is switched to a provider that needs explicit `cache_control` breakpoints (e.g. Anthropic, Gemini), add them
+- The model is called with **structured outputs** (`response_format` JSON schema, or tool calling) to return JSON: per-criterion band scores + overall + feedback bullets; always validate the JSON with Pydantic, and check a new `AI_MODEL` supports structured outputs on OpenRouter before switching
+- Writing: send full text to the model
 - Always store the raw model response alongside the parsed result for debugging and re-evaluation
-- Failed AI jobs go to a dead-letter queue, retried up to 3 times with exponential backoff
+- Grading runs as an in-process background task: up to 3 attempts with exponential backoff; on final failure the `AIAssessment` row is marked `failed` with the error stored **and** the test is handed to the teacher queue as a `HumanGrade(origin=ai_fallback)` (unless `AI_FAILURE_FALLBACK_TO_TEACHER` is off)
+- In-process tasks die with the process — on startup, re-run any `AIAssessment` rows stuck in `processing` (never `failed` ones) so a deploy/restart never strands a grading job. This assumes a single machine — revisit (lease/stale threshold or a real worker) before running more than one
 
 ## Security notes
 
 - Audio uploads use **pre-signed R2 PUT URLs** — backend never proxies upload bytes (R2 bucket CORS required for browser uploads)
 - Session timers are **server-enforced** — `started_at` checked on submission, not client-supplied
 - JWTs short-lived (15 min access, 30 day refresh); refresh tokens rotate on use
+- **Roles** are checked from the `users` row on every request (never a JWT claim), so a role change applies on the next request. Sign-up always creates a `student`; only admins change roles; the first admin is created with `python -m core.cli set-role <email> admin`
 
 ## Freemium / entitlements
 
-The product is freemium. Limits apply **only to the expensive AI-graded path** (Writing/Speaking → Claude/Whisper); Reading/Listening auto-grading is always unlimited.
+The product is freemium. Limits apply **only to Writing and Speaking**; Reading/Listening auto-grading is always unlimited.
 
 - **Tiers** — `User.plan` ∈ {`free`, `paid`}
 - **Reset** — fixed daily reset (e.g. midnight UTC); stored as a counter keyed by `(user, skill, day)`
 - **Pools** — separate per skill (independent Writing and Speaking counters)
 - **Limits** — tunable via settings, not hardcoded. Defaults: free 3/day each; paid 30/day each (a high ceiling, not unlimited, so even paid users retain cost protection)
-- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)` is called at the **enqueue point**, before any Anthropic/Whisper spend. Over limit → typed `QuotaExceededError` → HTTP 402/429 with a `resets_at` timestamp
+- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)` is called at **submission**, before the grading task is started and before any AI spend. Over limit → typed `QuotaExceededError` → HTTP 402/429 with a `resets_at` timestamp
 - **Billing** — tiers modeled now; Stripe (Checkout + webhooks + portal) is a later phase. Upgrades are set manually/admin for now
 
 ## Commands
 
-*To be added once the project is scaffolded.*
-
-Expected commands:
 - `uv sync` — install deps
-- `uvicorn api.main:app --reload` — run API
-- `arq worker.main.WorkerSettings` — run worker
+- `docker compose up -d` — start Postgres + MinIO locally
+- `uvicorn api.main:app --reload` — run the app (the only process)
 - `alembic upgrade head` — migrate DB
+- `python -m core.cli set-role <email> <role>` — set a user's role (bootstrap the first admin)
 - `pytest` — run tests
 - `ruff check . && ruff format --check . && mypy .` — lint + format check
 

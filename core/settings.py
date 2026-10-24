@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     env: str = "local"
 
     database_url: str
-    redis_url: str
 
     jwt_secret: str
     jwt_algorithm: str = "HS256"
@@ -21,8 +20,8 @@ class Settings(BaseSettings):
     r2_secret_access_key: str
     r2_bucket: str
 
-    anthropic_api_key: str
-    openai_api_key: str
+    openrouter_api_key: str
+    ai_model: str = "deepseek/deepseek-v4.1-flash-1017"
 
     free_writing_daily: int = 3
     free_speaking_daily: int = 3

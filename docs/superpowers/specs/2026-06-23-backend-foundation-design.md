@@ -1,7 +1,11 @@
 # IELTS Backend — Design & Build-Out Plan
 
 **Date:** 2026-06-23
-**Status:** Approved (design); Foundation phase ready for implementation planning
+**Status:** Approved (design); Foundation phase implemented.
+**Revised 2026-10-20:** simplified to a **single-process monolith** — the separate
+ARQ worker and Redis were removed so the whole system is one FastAPI app plus
+Postgres (and R2 for files). A worker + queue is deferred until scaling needs it
+(see §5).
 **Scope:** Full backend build-out, foundation-first, production-ready maturity.
 
 This document is the master design for the IELTS practice backend. It fully
@@ -24,14 +28,16 @@ is deployable, and honors the contract the Next.js frontend depends on.
 - **Production-ready** maturity bar from day one.
 - **Cloudflare-centric, cost-optimized** infrastructure (cheaper than AWS).
 - **Polling** (not SSE) to deliver async AI results to the frontend for v1.
-- **Redis + ARQ** (not Kafka) for the grading job queue.
+- **Single-process monolith** (revised 2026-10-20): AI grading runs as in-process
+  background tasks tracked in Postgres. No Redis, no ARQ, no worker — yet.
 - **Freemium** product: unlimited auto-graded tests; daily-capped AI-graded tests.
 
 ---
 
 ## 2. Architecture recap
 
-Modular monolith + a separate AI worker — two deployables sharing `core/`:
+Modular monolith — **one deployable, one process**. `api/` is the HTTP layer;
+`core/` holds everything else:
 
 | Module | Responsibility | Depends on |
 |---|---|---|
@@ -40,37 +46,34 @@ Modular monolith + a separate AI worker — two deployables sharing `core/`:
 | `core/models` | SQLAlchemy models (UUIDv7 PKs, TIMESTAMPTZ) | db |
 | `core/schemas` | Pydantic v2 request/response DTOs | — |
 | `core/services` | business logic; raises typed exceptions | models, schemas |
-| `core/ai` | Claude + Whisper clients, prompts, rubrics | settings |
-| `api` | FastAPI HTTP layer, routers, deps, exc handlers | core |
-| `worker` | ARQ jobs (grade_writing, grade_speaking) | core/ai, core |
+| `core/ai` | OpenRouter client, prompts, rubrics | settings |
+| `api` | FastAPI HTTP layer, routers, deps, exc handlers; starts grading background tasks | core |
 
-The API is stateless; the worker is an **always-on process** that watches the
-Redis queue. All state lives in Postgres / Redis / object storage, so both
-processes scale horizontally and restart freely.
+All durable state lives in Postgres and object storage. The one in-memory thing
+is an in-flight grading task; because its status is persisted on the
+`AIAssessment` row, a restart can find and resume it (§5).
 
 ---
 
 ## 3. Deployment & infrastructure
 
 Cost-optimized, Cloudflare-centric. Cloudflare's compute (Workers/Containers)
-**cannot** run this stack (async Python, native deps, always-on ARQ worker), so
-the Python processes run on a cheap container host **behind** Cloudflare.
+**cannot** run this stack (async Python, native deps), so the Python process
+runs on a cheap container host **behind** Cloudflare.
 
 | Concern | Choice | Notes |
 |---|---|---|
 | Edge / CDN / TLS / WAF | **Cloudflare** | Free tier; proxies the Fly API, serves R2 assets |
-| API + worker compute | **Fly.io** | One image, two processes: `api` (web) + `worker` (always-on ARQ); scale independently |
+| Compute | **Fly.io** | One image, one process (`api`), **exactly one machine**, always on (no scale-to-zero mid-grading; see §5 for why not more) |
 | Object storage | **Cloudflare R2** | S3-compatible → `aioboto3` unchanged; pre-signed PUT for uploads; **zero egress** for Listening audio |
 | Asset delivery | R2 + Cloudflare, **signed URLs** | Paid IELTS content stays private |
 | Postgres | **Neon**, **pooled endpoint** | Use Neon's `-pooler` host (PgBouncer, transaction mode) — fixes async pool exhaustion. *(Not Hyperdrive — that's a Workers-only binding, unreachable from Fly.)* |
-| Redis (broker + cache) | **Co-located on Fly** (recommended) or Upstash | Fly Redis app + volume + AOF persistence so queued jobs survive restarts |
 | Migrations | **Alembic as a Fly release command** | Never auto-run on boot; never `create_all()` |
 | Secrets | **Fly secrets** | Read via `core/settings.py` only |
-| Local parity | **Docker Compose** | Postgres + Redis + **MinIO** (R2/S3-compatible stand-in) |
+| Local parity | **Docker Compose** | Postgres + **MinIO** (R2/S3-compatible stand-in) |
 
 **Portability note:** the application code is identical to an AWS deployment —
-only endpoints and credentials change (R2 endpoint, Neon pooled URL, Fly Redis
-URL). Nothing about the application design is locked to Cloudflare.
+only endpoints and credentials change (R2 endpoint, Neon pooled URL). Nothing about the application design is locked to Cloudflare.
 
 ---
 
@@ -86,39 +89,65 @@ Pinned so the two greenfield repos don't drift:
 - **Uploads** — pre-signed **R2 PUT** URLs; backend never proxies upload bytes.
 - **Async AI results** — **polling**: frontend `GET`s the assessment/results
   endpoint until status flips `processing → ready`. SSE/WebSocket noted as a
-  future enhancement (e.g. live "transcribing → evaluating" progress) — not v1.
+  future enhancement (e.g. live grading progress) — not v1.
 - **Path note:** both `CLAUDE.md` files reference `../frontend` / `../backend`,
   but the real directories are `ielts-frontend` / `ielts-backend`. Any codegen or
   cross-repo path must use the real names.
 
 ---
 
-## 5. Async grading model (why ARQ, not Kafka)
+## 5. Async grading model (in-process; queue later)
 
 The freemium UX — *submit → "grading in progress" → user leaves → state turns
-green → results + breakdown appear* — is delivered by the standard async-worker
-pattern, no event-streaming platform required:
+green → results + breakdown appear* — needs work to happen **after** the HTTP
+response. In v1 that work runs **inside the API process**; no Redis, no queue,
+no worker:
 
-1. User submits a Writing/Speaking test.
-2. API checks entitlements (§7), then **enqueues a grading job** in Redis and
-   returns immediately (`processing`).
-3. The **ARQ worker** drains the queue: (Speaking) download audio from R2 →
-   Whisper transcribe → Claude evaluate → write `AIAssessment`; flip status.
-4. Frontend **polls** until the row is ready; shows bands + per-criterion
-   breakdown + feedback.
+1. User submits a Writing test (Speaking is graded by teachers — see
+   `2026-10-24-human-grading-design.md`).
+2. API checks entitlements (§6), inserts an `AIAssessment` row with status
+   `processing`, schedules the grading coroutine as a background task (FastAPI
+   `BackgroundTasks`), and returns immediately.
+3. The background task runs `core/services/grading`: the AI model (via OpenRouter) evaluates the
+   text → write scores + raw response to the row; flip status to `ready`.
+4. Frontend **polls** until the row is `ready` (or `failed`); shows bands +
+   per-criterion breakdown + feedback.
 
-ARQ also provides the retries + dead-letter behavior CLAUDE.md requires (≤3
-retries, exponential backoff). **Kafka is out of scope:** it's a backend-internal
-event log (the browser can't consume it, so polling is still required), and it's
-heavy/costly versus this workload. It would only earn its place if many services
-later need to react to the same events; noted as a future option, not v1.
+**The `AIAssessment` row is the job record.** That gives us, without a queue:
+
+- **Retries** — the task makes up to 3 attempts with exponential backoff. After
+  the last one it sets status `failed`, stores the error, and hands the test to
+  the teacher queue (see `2026-10-24-human-grading-design.md` §4.1).
+- **Restart safety** — in-process tasks die with the process (deploys, crashes).
+  On app startup (lifespan hook), re-schedule every row still in `processing`.
+  Grading must therefore be **idempotent** per row (overwrite, never append).
+  This sweep assumes **exactly one API machine**: with two, a booting machine
+  would re-grade rows the other is still working on (double spend, racing
+  writes). Going multi-machine is therefore a trigger for adding a worker (below).
+- **Background task opens its own DB session** — the request's session is closed
+  by the time the task runs.
+
+**Known trade-offs (accepted for v1):** grading shares CPU/event loop and
+connection pool with HTTP traffic; you can't scale grading separately from the
+API; long model calls hold a coroutine (cheap — they're I/O-bound).
+
+**When to add a worker:** if grading load starts slowing HTTP responses, or we
+need more than one API machine. Then: add a queue (ARQ on Redis
+is the default choice), move the call site from `BackgroundTasks` to `enqueue`,
+and run the same `core/services/grading` function from the worker. Because the
+logic already lives in `core/`, that is a small change.
+
+**Kafka is out of scope:** it's a backend-internal event log (the browser can't
+consume it, so polling is still required), and it's heavy/costly versus this
+workload.
 
 ---
 
 ## 6. Freemium / entitlements model
 
-Limits apply **only to the expensive AI-graded path** (Writing/Speaking →
-Claude/Whisper). Reading/Listening auto-grading is always unlimited.
+Limits apply **only to Writing and Speaking**: the Writing limit caps AI
+spend, the Speaking limit caps teacher workload. Reading/Listening auto-grading
+is always unlimited.
 
 - **Tiers** — `User.plan` ∈ {`free`, `paid`}.
 - **Reset model** — **fixed daily reset** (e.g. midnight UTC). Stored as a
@@ -129,7 +158,8 @@ Claude/Whisper). Reading/Listening auto-grading is always unlimited.
   - Paid: **30 Writing/day + 30 Speaking/day** (high ceiling, not unlimited, so
     even paid users retain CLAUDE.md's cost-protection guarantee)
 - **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)`
-  is called at the **enqueue point**, *before* any Anthropic/Whisper spend.
+  is called at **submission**, *before* the grading task starts and before any
+  AI spend.
   Reading/Listening bypass it. Over limit → typed `QuotaExceededError` → HTTP
   **402/429** with a `resets_at` timestamp the frontend displays.
 - **Billing** — **tiers modeled now; payments deferred.** Upgrade is set
@@ -141,16 +171,25 @@ Claude/Whisper). Reading/Listening auto-grading is always unlimited.
 ## 7. Build phases (roadmap)
 
 1. **Foundation** — fully specced in §8.
+1b. **Roles & admin users** — `users.role` (student/teacher/admin), role checks,
+   admin user management, first-admin CLI, band arithmetic. Plan:
+   `plans/2026-10-24-roles-and-admin-users.md`.
 2. **Test content & sessions** — Test/Section/Question/TestSession/Answer
    models, content read endpoints, session lifecycle with server-enforced timers.
 3. **Auto-grading** — Reading + Listening synchronous scoring.
-4. **AI pipeline** — `core/ai`, ARQ worker, `AIAssessment`, mandatory prompt
-   caching, dead-letter + retry, polling result delivery.
-5. **Entitlements** — per-skill daily quotas, `plan` gate at enqueue (§6).
+4. **AI pipeline (Writing only)** — `core/ai`, `AIAssessment`, in-process background grading
+   task (§5), mandatory prompt caching, retry + `failed` status, startup resume
+   of stuck rows, polling result delivery.
+5. **Entitlements** — per-skill daily quotas, `plan` gate at submission (§6).
 6. **Media** — R2 pre-signed PUT URLs; **R2 bucket CORS** for browser uploads.
+6b. **Human grading** — teacher queue for Speaking and requested/failed
+   Writing, claims, drafts, admin results + overview
+   (`specs/2026-10-24-human-grading-design.md`). Needs phases 2, 4, 5, 6.
 7. **Progress dashboard** — band-score trends per skill, weak areas.
 8. *(later)* **Stripe billing.**
 9. *(later)* **Deploy** to Fly.io + Cloudflare.
+10. *(later, only when needed)* **Scale out grading** — add a job queue + separate
+    worker process (§5, "When to add a worker").
 
 Each phase (2–9) gets its own dated spec → plan → build cycle.
 
@@ -160,9 +199,9 @@ Each phase (2–9) gets its own dated spec → plan → build cycle.
 
 **End state (acceptance criteria):**
 
-- `api` and `worker` both boot (worker connects to Redis, runs a healthcheck task).
+- The `api` process boots (single deployable; no worker, no Redis).
 - Full auth flow works: register → login → access protected route → refresh → logout.
-- `GET /health` returns green (checks DB + Redis).
+- `GET /health` returns green (checks DB).
 - `GET /docs` emits OpenAPI with explicit tags and stable operation IDs.
 - Schema changes run via Alembic; first migration creates `users` + refresh tokens.
 - CI is green: `uv sync`, `ruff check`, `ruff format --check`, `mypy` (strict), `pytest`.
@@ -175,11 +214,8 @@ ielts-backend/
 │   ├── main.py                 # app factory, routers, exc handlers, OpenAPI tags
 │   ├── deps.py                 # get_db, get_current_user
 │   └── routers/{auth.py, health.py}
-├── worker/
-│   ├── main.py                 # ARQ WorkerSettings; boots against Redis
-│   └── tasks/__init__.py       # one no-op/health task (real jobs land Phase 4)
 ├── core/
-│   ├── settings.py             # pydantic-settings: DB, Redis, R2, Anthropic, OpenAI, JWT, plan limits
+│   ├── settings.py             # pydantic-settings: DB, R2, OpenRouter, JWT, plan limits
 │   ├── db.py                   # async engine (asyncpg) + session factory + Base
 │   ├── logging.py              # structlog config + request-id middleware
 │   ├── exceptions.py           # AppError hierarchy → HTTP mapping
@@ -189,7 +225,7 @@ ielts-backend/
 ├── alembic/                    # async env.py + first migration
 ├── tests/                      # pytest + testcontainers Postgres
 ├── Dockerfile
-├── docker-compose.yml          # postgres + redis + minio
+├── docker-compose.yml          # postgres + minio
 ├── pyproject.toml              # uv, ruff, mypy strict
 └── .github/workflows/ci.yml
 ```
@@ -214,9 +250,9 @@ ielts-backend/
   `logger.info` debugging left in committed code.
 - **Frontend contract** — explicit OpenAPI tags + stable `operation_id`
   convention documented and applied from the first endpoints.
-- **Worker** — minimal `WorkerSettings` + healthcheck task proving the second
-  deployable boots against Redis.
-- **Local parity** — Docker Compose: Postgres + Redis + MinIO (R2 stand-in).
+- **Single process** — no worker in this phase (originally an ARQ worker +
+  Redis; removed 2026-10-20 to keep the system a simple monolith).
+- **Local parity** — Docker Compose: Postgres + MinIO (R2 stand-in).
 - **CI** — GitHub Actions: `uv sync` → `ruff check` + `ruff format --check` →
   `mypy` (strict) → `pytest` (testcontainers Postgres).
 - **Tests** — auth flow end-to-end + `/health`, against real Postgres;
@@ -230,4 +266,4 @@ ielts-backend/
 - Confirm CORS posture: browser→Next→backend is same-origin (cookie proxy), so
   API CORS may be unnecessary; the CORS that matters is **R2 bucket CORS** for
   pre-signed browser uploads (Media phase).
-- Decide Redis hosting: co-located Fly app vs Upstash (cost vs managed).
+- *(When a worker is added later)* decide queue/broker hosting, e.g. Redis on Fly vs Upstash.
