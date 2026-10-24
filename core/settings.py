@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     session_grace_seconds: int = 30
     max_text_answer_chars: int = 200
     max_essay_chars: int = 20_000
+    # In-process loop that submits exam sessions whose time ran out (one app process).
+    auto_submit_enabled: bool = True
+    auto_submit_interval_seconds: float = 60
 
 
 @lru_cache

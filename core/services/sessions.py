@@ -1,12 +1,14 @@
 """A student's attempt at one test version: start, read, answers, submission."""
 
+import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import ColumnElement, and_, case, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from core.exceptions import (
     ConflictError,
@@ -31,6 +33,8 @@ from core.services import catalog, storage
 from core.services.content import ItemSpec, item_index
 from core.services.entitlements import check_and_consume
 from core.settings import get_settings
+
+log = structlog.get_logger()
 
 _LIMITED_SKILLS = (Skill.WRITING, Skill.SPEAKING)
 
@@ -329,3 +333,19 @@ async def auto_submit_expired(db: AsyncSession, now: datetime | None = None) -> 
     now = _now(now)
     expired = and_(TestSession.deadline.is_not(None), TestSession.deadline < now - _grace())
     return len(await _submit(db, expired, SubmitReason.TIMEOUT, now))
+
+
+async def run_auto_submit_loop(
+    factory: async_sessionmaker[AsyncSession], interval_seconds: float
+) -> None:
+    """Submit expired exam sessions every interval, for as long as the app runs, so a test
+    is submitted even if its student never comes back. Assumes a single app process."""
+    while True:
+        try:
+            async with factory() as db:
+                count = await auto_submit_expired(db)
+            if count:
+                log.info("sessions_auto_submitted", count=count)
+        except Exception:
+            log.exception("auto_submit_failed")
+        await asyncio.sleep(interval_seconds)

@@ -1,7 +1,7 @@
 # Tests & Sessions (Epic A) — Design
 
 **Date:** 2026-10-24
-**Status:** Draft, awaiting approval
+**Status:** Approved 2026-10-24; implemented (plan `2026-10-24-tests-and-sessions.md`)
 **Builds on:** `2026-06-23-backend-foundation-design.md` (single-process monolith),
 `2026-10-24-human-grading-design.md` (roles, grading methods)
 

@@ -61,10 +61,11 @@ ielts-backend/
 ## Key domain concepts
 
 - **User** — has a `plan` (`free` | `paid`) that gates Writing/Speaking test volume (see Freemium) and a `role` (`student` | `teacher` | `admin`, see Roles)
-- **Test** — a complete IELTS test (one of: full / reading / listening / writing / speaking)
-- **Section** — within a test (e.g. Reading has 3 passages, Listening has 4 sections)
+- **Test** — a single-skill IELTS test (one of: reading / listening / writing / speaking); students take one skill at a time
+- **TestVersion** — a test's content as versioned JSONB documents (`content` student-visible, `answer_key`, `staff_content`); `draft → published → retired`; a published version never changes, every edit is a new draft version. Full design: `docs/superpowers/specs/2026-10-24-tests-and-sessions-design.md`
+- **Section** — within a test (Reading has 3 passages, Listening has 4 parts — "parts" to students, Writing 2 tasks, Speaking 3 parts)
 - **Question** — typed (multiple_choice, fill_blank, matching, short_answer, essay_task1, essay_task2, speaking_part1/2/3)
-- **TestSession** — a user's attempt at a test; tracks `started_at`, `submitted_at`, status, and `grading_method` (`ai` | `human`, set at submission)
+- **TestSession** — a user's attempt at one test version; `mode` (`practice` = no time limit | `exam` = server deadline + 30 s grace), `started_at`, `deadline`, `submitted_at`, status, and `grading_method` (`auto` | `ai` | `human`, fixed at submission). Answers autosave; expired exam sessions are auto-submitted (on the next read/save, and by an in-process loop every minute)
 - **Answer** — user's response to a question; for auto-graded types, scored synchronously; AI-graded Writing points to an `AIAssessment` row; human-graded sessions have a `HumanGrade`
 - **AIAssessment** — Writing only. Band scores per criterion + overall + feedback text; populated asynchronously by an in-process background task. The frontend **polls** the result endpoint, where students only ever see `being_graded → graded` (no SSE/WebSocket in v1)
 - **HumanGrade** — one per human-graded session (all Speaking; Writing on request or after AI failure); `awaiting_grader → claimed → graded`; `origin` ∈ `speaking | student_request | ai_fallback`
@@ -119,7 +120,7 @@ The product is freemium. Limits apply **only to Writing and Speaking**; Reading/
 - **Reset** — fixed daily reset (e.g. midnight UTC); stored as a counter keyed by `(user, skill, day)`
 - **Pools** — separate per skill (independent Writing and Speaking counters)
 - **Limits** — tunable via settings, not hardcoded. Defaults: free 3/day each; paid 30/day each (a high ceiling, not unlimited, so even paid users retain cost protection)
-- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)` is called at **submission**, before the grading task is started and before any AI spend. Over limit → typed `QuotaExceededError` → HTTP 402/429 with a `resets_at` timestamp
+- **Enforcement** — `core/services/entitlements.check_and_consume(db, user, skill, now)` is called when a Writing/Speaking session **starts** (practice or exam), before any work or AI spend; an abandoned test still counts. Over limit → typed `QuotaExceededError` → HTTP 429 with a `resets_at` timestamp
 - **Billing** — tiers modeled now; Stripe (Checkout + webhooks + portal) is a later phase. Upgrades are set manually/admin for now
 
 ## Commands
@@ -129,6 +130,7 @@ The product is freemium. Limits apply **only to Writing and Speaking**; Reading/
 - `uv run uvicorn api.main:app --reload` — run the app (the only process)
 - `uv run alembic upgrade head` — migrate DB
 - `uv run python -m core.cli set-role <email> <role>` — set a user's role (bootstrap the first admin)
+- `uv run python -m core.cli load-test <file.json> [--publish]` — load a test file (e.g. `seed/tests/practice-01-reading.json`) as a draft, optionally publish it
 - `uv run pytest` — run tests (Docker must be running)
 - `uv run ruff check . && uv run ruff format --check . && uv run mypy .` — lint + format + type check
 

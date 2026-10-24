@@ -160,11 +160,11 @@ is always unlimited.
   - Free: **3 Writing/day + 3 Speaking/day**
   - Paid: **30 Writing/day + 30 Speaking/day** (high ceiling, not unlimited, so
     even paid users retain CLAUDE.md's cost-protection guarantee)
-- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)`
-  is called at **submission**, *before* the grading task starts and before any
-  AI spend.
+- **Enforcement** — `core/services/entitlements.check_and_consume(db, user, skill, now)`
+  is called when a Writing/Speaking session **starts** (changed from submission
+  in `specs/2026-10-24-tests-and-sessions-design.md`), before any AI spend.
   Reading/Listening bypass it. Over limit → typed `QuotaExceededError` → HTTP
-  **402/429** with a `resets_at` timestamp the frontend displays.
+  **429** with a `resets_at` timestamp the frontend displays.
 - **Billing** — **tiers modeled now; payments deferred.** Upgrade is set
   manually/admin for now. Full **Stripe** integration (Checkout + webhooks +
   customer portal) is its own later phase.
@@ -177,25 +177,30 @@ is always unlimited.
 2. **Roles & admin users** — `users.role` (student/teacher/admin), role checks,
    admin user management, first-admin CLI, band arithmetic. Plan:
    `plans/2026-10-24-roles-and-admin-users.md`. *(done)*
-3. **Test content & sessions** — Test/Section/Question/TestSession/Answer
-   models, content read endpoints, session lifecycle with server-enforced timers.
+3. **Tests & sessions (Epic A)** — versioned single-skill tests loaded by CLI,
+   sessions (practice/exam, autosave, server deadlines, auto-submit), and the
+   Entitlements daily limits, now checked at session start (§6). Spec
+   `specs/2026-10-24-tests-and-sessions-design.md`, plan
+   `plans/2026-10-24-tests-and-sessions.md`. *(done)*
 4. **Auto-grading** — Reading + Listening synchronous scoring.
 5. **AI pipeline (Writing only)** — `core/ai` OpenRouter client, `AIAssessment`,
    in-process background grading task (§5), mandatory prompt caching, retries,
    hand-off to teachers on final failure, startup resume of stuck rows, polling
    result delivery.
-6. **Entitlements** — per-skill daily quotas, `plan` gate at submission (§6).
-7. **Media** — R2 pre-signed PUT URLs; **R2 bucket CORS** for browser uploads.
+6. **Media** — R2 pre-signed PUT URLs for student recordings; **R2 bucket CORS**
+   for browser uploads; turns Speaking sessions on.
+7. **AI test import (Epic B)** — admins upload PDF/Word (+ 4 Listening audio
+   files) per skill; AI converts to a draft; review, edit, publish. Needs 6.
 8. **Human grading** — teacher queue for Speaking and requested/failed
    Writing, claims, drafts, admin results + overview
-   (`specs/2026-10-24-human-grading-design.md`). Needs phases 3, 5, 6, 7.
+   (`specs/2026-10-24-human-grading-design.md`). Needs phases 3, 5, 6.
 9. **Progress dashboard** — band-score trends per skill, weak areas.
 10. *(later)* **Stripe billing.**
 11. *(later)* **Deploy** to Fly.io + Cloudflare.
 12. *(later, only when needed)* **Scale out grading** — add a job queue + separate
     worker process (§5, "When to add a worker").
 
-Each remaining phase (3–11) gets its own dated spec → plan → build cycle.
+Each remaining phase (4–11) gets its own dated spec → plan → build cycle.
 
 ---
 

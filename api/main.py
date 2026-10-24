@@ -1,3 +1,7 @@
+import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager, suppress
+
 from fastapi import FastAPI
 
 from api.routers import admin as admin_router
@@ -5,8 +9,11 @@ from api.routers import auth as auth_router
 from api.routers import health as health_router
 from api.routers import sessions as sessions_router
 from api.routers import tests as tests_router
+from core.db import async_session_factory
 from core.exceptions import register_exception_handlers
 from core.logging import RequestIdMiddleware, configure_logging
+from core.services.sessions import run_auto_submit_loop
+from core.settings import get_settings
 
 OPENAPI_TAGS = [
     {"name": "auth", "description": "Registration, login, token lifecycle."},
@@ -17,9 +24,26 @@ OPENAPI_TAGS = [
 ]
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    settings = get_settings()
+    task = None
+    if settings.auto_submit_enabled:
+        task = asyncio.create_task(
+            run_auto_submit_loop(async_session_factory, settings.auto_submit_interval_seconds)
+        )
+    yield
+    if task is not None:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
+
+
 def create_app() -> FastAPI:
     configure_logging()
-    app = FastAPI(title="IELTS Backend", version="0.1.0", openapi_tags=OPENAPI_TAGS)
+    app = FastAPI(
+        title="IELTS Backend", version="0.1.0", openapi_tags=OPENAPI_TAGS, lifespan=_lifespan
+    )
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(health_router.router)

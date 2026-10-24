@@ -29,6 +29,8 @@ os.environ.setdefault("R2_ACCESS_KEY_ID", "x")
 os.environ.setdefault("R2_SECRET_ACCESS_KEY", "x")
 os.environ.setdefault("R2_BUCKET", "x")
 os.environ.setdefault("OPENROUTER_API_KEY", "x")
+# The app's auto-submit loop would use core.db's placeholder engine; tests drive it directly.
+os.environ.setdefault("AUTO_SUBMIT_ENABLED", "false")
 
 
 @pytest.fixture(scope="session")
