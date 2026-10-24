@@ -21,12 +21,13 @@ from core.models import (
     SessionStatus,
     Skill,
     SubmitReason,
+    Test,
     TestSession,
     TestVersion,
     User,
 )
 from core.schemas.session import AnswerInput
-from core.services import catalog
+from core.services import catalog, storage
 from core.services.content import ItemSpec, item_index
 from core.services.entitlements import check_and_consume
 from core.settings import get_settings
@@ -122,6 +123,42 @@ async def get_version(db: AsyncSession, ts: TestSession) -> TestVersion:
     version = await db.get(TestVersion, ts.test_version_id)
     assert version is not None  # FK
     return version
+
+
+async def tests_for(db: AsyncSession, sessions: list[TestSession]) -> dict[uuid.UUID, Test]:
+    """The test each session belongs to, keyed by session id, in one query."""
+    version_ids = {ts.test_version_id for ts in sessions}
+    rows = await db.execute(
+        select(TestVersion.id, Test)
+        .join(Test, Test.id == TestVersion.test_id)
+        .where(TestVersion.id.in_(version_ids))
+    )
+    by_version = {version_id: test for version_id, test in rows.tuples()}
+    return {ts.id: by_version[ts.test_version_id] for ts in sessions}
+
+
+_ASSET_FIELDS = {"audio", "image"}
+
+
+async def student_content(content: dict[str, Any]) -> dict[str, Any]:
+    """A copy of a version's content with every asset key replaced by a signed GET URL.
+    `content` holds only student-visible fields; answer keys and transcripts live elsewhere."""
+
+    async def walk(node: Any) -> Any:
+        if isinstance(node, dict):
+            out = {}
+            for key, value in node.items():
+                if key in _ASSET_FIELDS and isinstance(value, str):
+                    out[key] = await storage.signed_get_url(value)
+                else:
+                    out[key] = await walk(value)
+            return out
+        if isinstance(node, list):
+            return [await walk(value) for value in node]
+        return node
+
+    signed: dict[str, Any] = await walk(content)
+    return signed
 
 
 async def get_answers(db: AsyncSession, ts: TestSession) -> dict[int, Any]:
