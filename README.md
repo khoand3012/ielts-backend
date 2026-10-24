@@ -85,6 +85,14 @@ uv run uvicorn api.main:app --reload
 
 Interactive API docs are then at `http://localhost:8000/docs`.
 
+Create your first admin: register an account (`POST /auth/register`), then promote it:
+
+```bash
+uv run python -m core.cli set-role you@example.com admin
+```
+
+After that, admins manage other users' roles through `PATCH /admin/users/{user_id}`.
+
 ## Commands
 
 | Command | What it does |
@@ -92,6 +100,7 @@ Interactive API docs are then at `http://localhost:8000/docs`.
 | `uv sync` | Install dependencies |
 | `uv run uvicorn api.main:app --reload` | Run the API |
 | `uv run alembic upgrade head` | Apply migrations |
+| `uv run python -m core.cli set-role <email> <role>` | Set a user's role (`student`/`teacher`/`admin`) |
 | `uv run alembic revision --autogenerate -m "msg"` | Create a migration |
 | `uv run pytest` | Run tests |
 | `uv run ruff check . && uv run ruff format --check . && uv run mypy .` | Lint, format, type check |
