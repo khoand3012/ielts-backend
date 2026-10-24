@@ -27,6 +27,13 @@ class AuthError(AppError):
     code = "unauthorized"
 
 
+class QuotaExceededError(AppError):
+    """Daily Writing/Speaking limit reached; `extra["resets_at"]` says when it resets."""
+
+    status_code = 429
+    code = "quota_exceeded"
+
+
 class ForbiddenError(AppError):
     status_code = 403
     code = "forbidden"
