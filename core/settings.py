@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     paid_writing_daily: int = 30
     paid_speaking_daily: int = 30
 
+    # Exam-mode time limits; practice mode has none.
+    reading_time_limit_minutes: int = 60
+    listening_time_limit_minutes: int = 32
+    writing_time_limit_minutes: int = 60
+    speaking_time_limit_minutes: int = 20
+    # Saves arriving this long after the deadline still count.
+    session_grace_seconds: int = 30
+
 
 @lru_cache
 def get_settings() -> Settings:
