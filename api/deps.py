@@ -1,5 +1,5 @@
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Annotated
 
 from fastapi import Depends
@@ -7,8 +7,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import async_session_factory
-from core.exceptions import AuthError, NotFoundError
-from core.models import User
+from core.exceptions import AuthError, ForbiddenError, NotFoundError
+from core.models import Role, User
 from core.services.auth import get_user_by_id
 from core.services.security import decode_token
 
@@ -39,3 +39,16 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def require_role(*roles: Role) -> Callable[[User], Awaitable[User]]:
+    async def _require_role(user: CurrentUser) -> User:
+        if user.role not in roles:
+            raise ForbiddenError("insufficient role")
+        return user
+
+    return _require_role
+
+
+AdminUser = Annotated[User, Depends(require_role(Role.ADMIN))]
+TeacherUser = Annotated[User, Depends(require_role(Role.TEACHER, Role.ADMIN))]
