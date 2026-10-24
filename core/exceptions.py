@@ -22,6 +22,12 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class SessionClosedError(ConflictError):
+    """The session is submitted (or past its deadline), so it can't change any more."""
+
+    code = "session_closed"
+
+
 class AuthError(AppError):
     status_code = 401
     code = "unauthorized"

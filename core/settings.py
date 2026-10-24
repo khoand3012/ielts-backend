@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     speaking_time_limit_minutes: int = 20
     # Saves arriving this long after the deadline still count.
     session_grace_seconds: int = 30
+    max_text_answer_chars: int = 200
+    max_essay_chars: int = 20_000
 
 
 @lru_cache
