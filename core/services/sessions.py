@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import ColumnElement, and_, case, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,17 @@ from core.exceptions import (
     SessionClosedError,
     ValidationAppError,
 )
-from core.models import Answer, SessionMode, SessionStatus, Skill, TestSession, TestVersion, User
+from core.models import (
+    Answer,
+    GradingMethod,
+    SessionMode,
+    SessionStatus,
+    Skill,
+    SubmitReason,
+    TestSession,
+    TestVersion,
+    User,
+)
 from core.schemas.session import AnswerInput
 from core.services import catalog
 from core.services.content import ItemSpec, item_index
@@ -26,6 +36,14 @@ _LIMITED_SKILLS = (Skill.WRITING, Skill.SPEAKING)
 
 def _now(now: datetime | None) -> datetime:
     return now or datetime.now(UTC)
+
+
+def _grace() -> timedelta:
+    return timedelta(seconds=get_settings().session_grace_seconds)
+
+
+def _expired(ts: TestSession, now: datetime) -> bool:
+    return ts.deadline is not None and now > ts.deadline + _grace()
 
 
 def exam_time_limit(skill: Skill) -> timedelta:
@@ -78,7 +96,13 @@ async def _owned(db: AsyncSession, user: User, session_id: uuid.UUID) -> TestSes
 async def get_session(
     db: AsyncSession, user: User, session_id: uuid.UUID, now: datetime | None = None
 ) -> TestSession:
-    return await _owned(db, user, session_id)
+    """The caller's session; an exam session past its deadline is submitted first."""
+    now = _now(now)
+    ts = await _owned(db, user, session_id)
+    if ts.status == SessionStatus.IN_PROGRESS and _expired(ts, now):
+        await _submit(db, TestSession.id == ts.id, SubmitReason.TIMEOUT, now)
+        await db.refresh(ts)
+    return ts
 
 
 async def list_sessions(
@@ -119,6 +143,10 @@ async def _lock_open(
         raise NotFoundError("session not found")
     if ts.status != SessionStatus.IN_PROGRESS:
         raise SessionClosedError("session is already submitted")
+    if _expired(ts, now):
+        # Submit it (committed) before refusing, so the refusal doesn't roll it back.
+        await _submit(db, TestSession.id == ts.id, SubmitReason.TIMEOUT, now)
+        raise SessionClosedError("time is up; the session has been submitted")
     return ts
 
 
@@ -199,3 +227,68 @@ async def set_manual_grading(
     await db.commit()
     await db.refresh(ts)
     return ts
+
+
+async def on_session_submitted(db: AsyncSession, ts: TestSession) -> None:
+    """Runs once per submitted session, inside the submitting transaction. Grading phases
+    (auto-grading, AI, human) hook in here."""
+    return None
+
+
+_GRADING_METHOD = case(
+    (TestSession.skill.in_([Skill.READING, Skill.LISTENING]), GradingMethod.AUTO.value),
+    (TestSession.skill == Skill.SPEAKING, GradingMethod.HUMAN.value),
+    (TestSession.request_manual_grading, GradingMethod.HUMAN.value),
+    else_=GradingMethod.AI.value,
+)
+
+
+async def _submit(
+    db: AsyncSession, which: ColumnElement[bool], reason: SubmitReason, now: datetime
+) -> list[TestSession]:
+    """Submit matching sessions that are still in progress, in one conditional UPDATE, so a
+    session is submitted exactly once however many callers race. Commits."""
+    stmt = (
+        update(TestSession)
+        .where(which, TestSession.status == SessionStatus.IN_PROGRESS)
+        .values(
+            status=SessionStatus.SUBMITTED,
+            submitted_at=now,
+            submit_reason=reason,
+            grading_method=_GRADING_METHOD,
+            updated_at=now,
+        )
+        .returning(TestSession)
+        .execution_options(populate_existing=True)
+    )
+    submitted = list(await db.scalars(stmt))
+    for ts in submitted:
+        await on_session_submitted(db, ts)
+    await db.commit()
+    return submitted
+
+
+async def submit_session(
+    db: AsyncSession, user: User, session_id: uuid.UUID, now: datetime | None = None
+) -> TestSession:
+    now = _now(now)
+    ts = await db.scalar(
+        select(TestSession)
+        .where(TestSession.id == session_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if ts is None or ts.user_id != user.id:
+        raise NotFoundError("session not found")
+    if ts.status != SessionStatus.IN_PROGRESS:
+        raise SessionClosedError("session is already submitted")
+    reason = SubmitReason.TIMEOUT if _expired(ts, now) else SubmitReason.STUDENT
+    [submitted] = await _submit(db, TestSession.id == ts.id, reason, now)
+    return submitted
+
+
+async def auto_submit_expired(db: AsyncSession, now: datetime | None = None) -> int:
+    """Submit every exam session past its deadline plus grace. Returns how many."""
+    now = _now(now)
+    expired = and_(TestSession.deadline.is_not(None), TestSession.deadline < now - _grace())
+    return len(await _submit(db, expired, SubmitReason.TIMEOUT, now))
