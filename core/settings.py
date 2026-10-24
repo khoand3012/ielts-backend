@@ -9,7 +9,6 @@ class Settings(BaseSettings):
     env: str = "local"
 
     database_url: str
-    redis_url: str
 
     jwt_secret: str
     jwt_algorithm: str = "HS256"
@@ -22,7 +21,6 @@ class Settings(BaseSettings):
     r2_bucket: str
 
     anthropic_api_key: str
-    openai_api_key: str
 
     free_writing_daily: int = 3
     free_speaking_daily: int = 3

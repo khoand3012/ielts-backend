@@ -5,4 +5,4 @@ async def test_health_ok(app_client: AsyncClient) -> None:
     resp = await app_client.get("/health")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["db"] == "ok"
+    assert body == {"status": "ok", "db": "ok"}

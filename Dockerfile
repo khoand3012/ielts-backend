@@ -9,12 +9,11 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY core ./core
 COPY api ./api
-COPY worker ./worker
 COPY alembic.ini ./
 COPY alembic ./alembic
 RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
-# API by default; the worker process overrides the command (see compose / Fly).
+# Single process: the FastAPI app (AI grading runs in-process as background tasks).
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
