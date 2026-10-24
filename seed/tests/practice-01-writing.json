@@ -1,0 +1,24 @@
+{
+  "slug": "practice-01-writing",
+  "title": "Practice Test 1 — Writing",
+  "skill": "writing",
+  "content": {
+    "tasks": [
+      {
+        "number": 1,
+        "prompt": "The chart below shows the percentage of journeys to work made by four types of transport in a European city in 2000, 2010 and 2020.\n\nSummarise the information by selecting and reporting the main features, and make comparisons where relevant.\n\nWrite at least 150 words.",
+        "min_words": 150,
+        "image": "tests/practice-01-writing/task1.svg"
+      },
+      {
+        "number": 2,
+        "prompt": "Some people believe that schools should spend more time teaching practical life skills, such as managing money and cooking, even if this means less time for traditional academic subjects.\n\nTo what extent do you agree or disagree?\n\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.\n\nWrite at least 250 words.",
+        "min_words": 250,
+        "image": null
+      }
+    ]
+  },
+  "assets": {
+    "tests/practice-01-writing/task1.svg": "assets/practice-01-writing-task1.svg"
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "slug": "practice-01-speaking",
+  "title": "Practice Test 1 — Speaking",
+  "skill": "speaking",
+  "content": {
+    "part1": {
+      "topics": [
+        {
+          "topic": "Work or studies",
+          "questions": [
+            {
+              "number": 1,
+              "text": "Do you work, or are you a student?",
+              "audio": null
+            },
+            {
+              "number": 2,
+              "text": "What do you enjoy most about your work or studies?",
+              "audio": null
+            },
+            {
+              "number": 3,
+              "text": "Is there anything you would like to change about it?",
+              "audio": null
+            }
+          ]
+        },
+        {
+          "topic": "Mornings",
+          "questions": [
+            {
+              "number": 4,
+              "text": "Are you a morning person?",
+              "audio": null
+            },
+            {
+              "number": 5,
+              "text": "What do you usually do in the first hour after you wake up?",
+              "audio": null
+            },
+            {
+              "number": 6,
+              "text": "Has your morning routine changed since you were a child?",
+              "audio": null
+            },
+            {
+              "number": 7,
+              "text": "Do you think it is important to eat breakfast? Why?",
+              "audio": null
+            }
+          ]
+        },
+        {
+          "topic": "Parks",
+          "questions": [
+            {
+              "number": 8,
+              "text": "How often do you go to a park?",
+              "audio": null
+            },
+            {
+              "number": 9,
+              "text": "What do people usually do in parks in your country?",
+              "audio": null
+            },
+            {
+              "number": 10,
+              "text": "Would you like there to be more parks where you live? Why or why not?",
+              "audio": null
+            }
+          ]
+        }
+      ]
+    },
+    "part2": {
+      "number": 11,
+      "cue_card": {
+        "task": "Describe a time when an older person taught you something useful.",
+        "you_should_say": [
+          "who the person was",
+          "what they taught you",
+          "how they taught you"
+        ],
+        "and_explain": "and explain why it was useful to you."
+      },
+      "audio": null,
+      "rounding_off": [
+        {
+          "number": 12,
+          "text": "Do you still use this skill today?",
+          "audio": null
+        }
+      ]
+    },
+    "part3": {
+      "theme": "Learning from older generations",
+      "questions": [
+        {
+          "number": 13,
+          "text": "What kinds of skills do older people usually pass on to younger people in your country?",
+          "audio": null
+        },
+        {
+          "number": 14,
+          "text": "Are young people today as willing to learn from older people as they were in the past? Why or why not?",
+          "audio": null
+        },
+        {
+          "number": 15,
+          "text": "Some people say that, because of technology, older people now learn more from the young than the other way round. Do you agree?",
+          "audio": null
+        },
+        {
+          "number": 16,
+          "text": "Should schools invite older members of the community to teach some lessons? Why?",
+          "audio": null
+        },
+        {
+          "number": 17,
+          "text": "What might be lost if traditional skills are no longer passed on?",
+          "audio": null
+        }
+      ]
+    }
+  }
+}
