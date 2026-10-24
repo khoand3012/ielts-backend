@@ -195,6 +195,13 @@ def _invalid(question: int, message: str) -> ValidationAppError:
     return ValidationAppError(message, extra={"question": question})
 
 
+def _is_empty(value: str | list[str] | None) -> bool:
+    """Nothing chosen or typed: null, no options ticked, or a blank text box."""
+    if isinstance(value, str):
+        return not value.strip()
+    return not value
+
+
 def _check_value(spec: ItemSpec, value: str | list[str]) -> None:
     settings = get_settings()
     q = spec.key
@@ -229,29 +236,32 @@ async def save_answers(
     ts = await _owned(db, user, session_id)
     version = await get_version(db, ts)
     index = item_index(Skill(ts.skill), catalog.load_content(Skill(ts.skill), version))
+    values: dict[int, str | list[str] | None] = {}
     for answer in answers:
         spec = index.get(answer.question)
         if spec is None:
             raise _invalid(answer.question, f"there is no question {answer.question}")
-        if answer.value is not None:
-            _check_value(spec, answer.value)
+        value = None if _is_empty(answer.value) else answer.value
+        if value is not None:
+            _check_value(spec, value)
+        values[answer.question] = value
 
     ts = await _lock_open(db, user, session_id, now)
 
-    for answer in answers:
-        if answer.value is None:
+    for question, value in values.items():
+        if value is None:
             await db.execute(
                 delete(Answer).where(
-                    Answer.test_session_id == ts.id, Answer.question_number == answer.question
+                    Answer.test_session_id == ts.id, Answer.question_number == question
                 )
             )
         else:
             await db.execute(
                 insert(Answer)
-                .values(test_session_id=ts.id, question_number=answer.question, value=answer.value)
+                .values(test_session_id=ts.id, question_number=question, value=value)
                 .on_conflict_do_update(
                     index_elements=[Answer.test_session_id, Answer.question_number],
-                    set_={"value": answer.value, "updated_at": now},
+                    set_={"value": value, "updated_at": now},
                 )
             )
     await db.commit()

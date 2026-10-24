@@ -2,10 +2,12 @@
 
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import aioboto3
+import botocore.session
 from botocore.config import Config
 
 from core.settings import get_settings
@@ -36,12 +38,26 @@ async def upload_file(key: str, path: Path, content_type: str) -> None:
         )
 
 
+@lru_cache
+def _signer() -> Any:
+    """A synchronous client used only to sign URLs. Building a client is slow (botocore loads
+    its service model), so it is built once; signing itself is local and takes microseconds."""
+    settings = get_settings()
+    return botocore.session.get_session().create_client(
+        "s3",
+        endpoint_url=settings.r2_endpoint_url,
+        aws_access_key_id=settings.r2_access_key_id,
+        aws_secret_access_key=settings.r2_secret_access_key,
+        region_name="auto",
+        config=Config(signature_version="s3v4"),
+    )
+
+
 async def signed_get_url(key: str) -> str:
     settings = get_settings()
-    async with _client() as client:
-        url: str = await client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": settings.r2_bucket, "Key": key},
-            ExpiresIn=settings.signed_url_ttl_seconds,
-        )
+    url: str = _signer().generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.r2_bucket, "Key": key},
+        ExpiresIn=settings.signed_url_ttl_seconds,
+    )
     return url

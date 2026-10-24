@@ -143,7 +143,7 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `SESSION_GRACE_SECONDS` | no | `30` | Saves this long after the deadline still count |
 | `AUTO_SUBMIT_ENABLED` | no | `true` | Run the in-process loop that submits expired exam sessions |
 | `AUTO_SUBMIT_INTERVAL_SECONDS` | no | `60` | How often that loop runs |
-| `SIGNED_URL_TTL_SECONDS` | no | `900` | Lifetime of signed asset URLs in test content |
+| `SIGNED_URL_TTL_SECONDS` | no | `14400` | Lifetime of signed asset URLs in test content (longer than the longest exam) |
 
 Never commit a real `.env`.
 

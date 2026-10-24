@@ -64,7 +64,6 @@ async def test_single_multiple_choice_is_a_list(
     ts = await practice(db_session, user, Skill.LISTENING)
     assert await save(db_session, user, ts, (11, ["A"])) == {11: ["A"]}
     await rejects(db_session, user, ts, 11, ["A", "B"])
-    await rejects(db_session, user, ts, 11, [])
 
 
 async def test_matching_takes_one_option_key(db_session: AsyncSession, make_user: MakeUser) -> None:
@@ -139,3 +138,11 @@ async def test_toggle_on_submitted_session_is_409(
     await db_session.commit()
     with pytest.raises(SessionClosedError):
         await sessions.set_manual_grading(db_session, user, ts.id, True)
+
+
+async def test_empty_values_clear_an_answer(db_session: AsyncSession, make_user: MakeUser) -> None:
+    user, _ = await make_user()
+    ts = await practice(db_session, user, Skill.LISTENING)
+    await save(db_session, user, ts, (11, ["A"]), (1, "pottery"), (2, "Wednesday"))
+    # unticking the only option sends [], clearing a text box sends "" or just spaces
+    assert await save(db_session, user, ts, (11, []), (1, ""), (2, "   ")) == {}

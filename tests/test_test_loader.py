@@ -55,8 +55,31 @@ async def test_load_uploads_assets_to_their_keys(db_session: AsyncSession, tmp_p
     (tmp_path / "chart.svg").write_text("<svg/>", encoding="utf-8")
     data = make_file("writing", writing_content(), assets={"tests/f/task1.svg": "chart.svg"})
     upload = FakeUploader()
-    await load_test_file(db_session, write(tmp_path, data), publish=True, upload=upload)
-    assert upload.calls == [("tests/f/task1.svg", tmp_path / "chart.svg", "image/svg+xml")]
+    result = await load_test_file(db_session, write(tmp_path, data), publish=True, upload=upload)
+    [(key, local, content_type)] = upload.calls
+    assert local == tmp_path / "chart.svg"
+    assert content_type == "image/svg+xml"
+    # stored under a key that depends on the file's bytes, and the content points at it
+    assert key.startswith(f"tests/{data['slug']}/") and key.endswith("/chart.svg")
+    assert result.version.content["tasks"][0]["image"] == key
+
+
+async def test_changed_asset_never_overwrites_a_published_versions_file(
+    db_session: AsyncSession, tmp_path: Path
+) -> None:
+    (tmp_path / "chart.svg").write_text("<svg>v1</svg>", encoding="utf-8")
+    data = make_file("writing", writing_content(), assets={"tests/f/task1.svg": "chart.svg"})
+    path = write(tmp_path, data)
+    upload = FakeUploader()
+    v1 = (await load_test_file(db_session, path, publish=True, upload=upload)).version
+
+    (tmp_path / "chart.svg").write_text("<svg>v2</svg>", encoding="utf-8")
+    v2 = (await load_test_file(db_session, path, publish=False, upload=upload)).version
+
+    first_key, second_key = (call[0] for call in upload.calls)
+    assert first_key != second_key
+    assert v1.content["tasks"][0]["image"] == first_key
+    assert v2.content["tasks"][0]["image"] == second_key
 
 
 async def test_missing_asset_file_rejected(db_session: AsyncSession, tmp_path: Path) -> None:

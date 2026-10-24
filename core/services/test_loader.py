@@ -1,6 +1,7 @@
 """Load a test from a JSON file (one skill per file) into a draft, optionally publishing it."""
 
 import asyncio
+import hashlib
 import json
 import mimetypes
 from dataclasses import dataclass
@@ -39,6 +40,26 @@ class LoadResult:
     published: bool
 
 
+async def _stored_key(slug: str, local: Path) -> str:
+    digest = hashlib.sha256(await asyncio.to_thread(local.read_bytes)).hexdigest()[:16]
+    return f"tests/{slug}/{digest}/{local.name}"
+
+
+def _rename_assets(node: Any, renames: dict[str, str]) -> Any:
+    """Copy of the content with each asset key (an `audio`/`image` value) swapped for its
+    stored key."""
+    if isinstance(node, dict):
+        return {
+            k: renames.get(v, v)
+            if k in ("audio", "image") and isinstance(v, str)
+            else _rename_assets(v, renames)
+            for k, v in node.items()
+        }
+    if isinstance(node, list):
+        return [_rename_assets(v, renames) for v in node]
+    return node
+
+
 async def load_test_file(
     db: AsyncSession,
     path: Path,
@@ -62,9 +83,13 @@ async def load_test_file(
     for key, local in files.items():
         if not await asyncio.to_thread(local.is_file):
             raise ValidationAppError(f"asset file {local} for {key} does not exist")
+    # Files live under a key built from their bytes, so loading a changed file never replaces
+    # the object that a published (or running) version points at.
+    stored = {key: await _stored_key(file.slug, local) for key, local in files.items()}
     for key, local in files.items():
         content_type = mimetypes.guess_type(local.name)[0] or "application/octet-stream"
-        await upload(key, local, content_type)
+        await upload(stored[key], local, content_type)
+    content = parse_content(file.skill, _rename_assets(file.content, stored))
 
     version = await catalog.save_draft(
         db,
