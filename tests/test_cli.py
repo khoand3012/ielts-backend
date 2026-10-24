@@ -1,4 +1,7 @@
+import uuid
+
 import pytest
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from uuid_utils.compat import uuid7
 
@@ -32,3 +35,19 @@ def test_cli_rejects_unknown_role() -> None:
     with pytest.raises(SystemExit) as exc:
         build_parser().parse_args(["set-role", "a@t.com", "superuser"])
     assert exc.value.code == 2
+
+
+async def test_cli_matches_email_as_typed_at_registration(
+    _engine: AsyncEngine, app_client: AsyncClient
+) -> None:
+    factory = async_sessionmaker(_engine, expire_on_commit=False)
+    typed = f"Cli.Mixed-{uuid7()}@Example.COM"
+    resp = await app_client.post("/auth/register", json={"email": typed, "password": "password123"})
+    assert resp.status_code == 201
+
+    assert await run(["set-role", typed, "admin"], factory) == 0
+
+    async with factory() as session:
+        reloaded = await session.get(User, uuid.UUID(resp.json()["id"]))
+        assert reloaded is not None
+        assert reloaded.role == "admin"

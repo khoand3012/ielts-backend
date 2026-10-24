@@ -5,12 +5,17 @@ import asyncio
 import sys
 from collections.abc import Sequence
 
+from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from core.db import async_session_factory
 from core.exceptions import NotFoundError
 from core.models import Role
 from core.services.users import set_role_by_email
+
+# Same normalization registration applies (EmailStr lowercases the domain), so the email
+# can be typed exactly as the user registered it.
+_email = TypeAdapter(EmailStr)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,9 +32,14 @@ async def run(
     session_factory: async_sessionmaker[AsyncSession] = async_session_factory,
 ) -> int:
     args = build_parser().parse_args(argv)
+    try:
+        email = _email.validate_python(args.email)
+    except ValidationError:
+        print(f"invalid email address {args.email}", file=sys.stderr)
+        return 1
     async with session_factory() as session:
         try:
-            await set_role_by_email(session, args.email, Role(args.role))
+            await set_role_by_email(session, email, Role(args.role))
         except NotFoundError:
             print(f"no user with email {args.email}", file=sys.stderr)
             return 1

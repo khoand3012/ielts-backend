@@ -103,7 +103,8 @@ green → results + breakdown appear* — needs work to happen **after** the HTT
 response. In v1 that work runs **inside the API process**; no Redis, no queue,
 no worker:
 
-1. User submits a Writing/Speaking test.
+1. User submits a Writing test (Speaking is graded by teachers — see
+   `2026-10-24-human-grading-design.md`).
 2. API checks entitlements (§6), inserts an `AIAssessment` row with status
    `processing`, schedules the grading coroutine as a background task (FastAPI
    `BackgroundTasks`), and returns immediately.
@@ -144,8 +145,9 @@ workload.
 
 ## 6. Freemium / entitlements model
 
-Limits apply **only to the expensive AI-graded path** (Writing/Speaking →
-Claude). Reading/Listening auto-grading is always unlimited.
+Limits apply **only to Writing and Speaking**: the Writing limit caps Claude
+spend, the Speaking limit caps teacher workload. Reading/Listening auto-grading
+is always unlimited.
 
 - **Tiers** — `User.plan` ∈ {`free`, `paid`}.
 - **Reset model** — **fixed daily reset** (e.g. midnight UTC). Stored as a
