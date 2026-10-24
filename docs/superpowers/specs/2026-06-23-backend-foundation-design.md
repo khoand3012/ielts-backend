@@ -115,8 +115,8 @@ no worker:
 **The `AIAssessment` row is the job record.** That gives us, without a queue:
 
 - **Retries** — the task makes up to 3 attempts with exponential backoff. After
-  the last one it sets status `failed` and stores the error (this is our
-  "dead letter": failed rows are queryable and can be re-run).
+  the last one it sets status `failed`, stores the error, and hands the test to
+  the teacher queue (see `2026-10-24-human-grading-design.md` §4.1).
 - **Restart safety** — in-process tasks die with the process (deploys, crashes).
   On app startup (lifespan hook), re-schedule every row still in `processing`.
   Grading must therefore be **idempotent** per row (overwrite, never append).
@@ -169,14 +169,20 @@ Claude). Reading/Listening auto-grading is always unlimited.
 ## 7. Build phases (roadmap)
 
 1. **Foundation** — fully specced in §8.
+1b. **Roles & admin users** — `users.role` (student/teacher/admin), role checks,
+   admin user management, first-admin CLI, band arithmetic. Plan:
+   `plans/2026-10-24-roles-and-admin-users.md`.
 2. **Test content & sessions** — Test/Section/Question/TestSession/Answer
    models, content read endpoints, session lifecycle with server-enforced timers.
 3. **Auto-grading** — Reading + Listening synchronous scoring.
-4. **AI pipeline** — `core/ai`, `AIAssessment`, in-process background grading
+4. **AI pipeline (Writing only)** — `core/ai`, `AIAssessment`, in-process background grading
    task (§5), mandatory prompt caching, retry + `failed` status, startup resume
    of stuck rows, polling result delivery.
 5. **Entitlements** — per-skill daily quotas, `plan` gate at submission (§6).
 6. **Media** — R2 pre-signed PUT URLs; **R2 bucket CORS** for browser uploads.
+6b. **Human grading** — teacher queue for Speaking and requested/failed
+   Writing, claims, drafts, admin results + overview
+   (`specs/2026-10-24-human-grading-design.md`). Needs phases 2, 4, 5, 6.
 7. **Progress dashboard** — band-score trends per skill, weak areas.
 8. *(later)* **Stripe billing.**
 9. *(later)* **Deploy** to Fly.io + Cloudflare.
