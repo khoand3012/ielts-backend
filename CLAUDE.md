@@ -17,13 +17,13 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 - **Auth**: JWT (access + refresh) via `python-jose`; passwords with `argon2-cffi`
 - **Dependency / packaging**: `uv` (fast resolver) + `pyproject.toml`
 - **Lint / format**: `ruff` (lint + format) + `mypy` (strict)
-- **Testing**: `pytest` + `pytest-asyncio` + `httpx` async client; integration tests hit a real Postgres (testcontainers or docker-compose)
+- **Testing**: `pytest` + `pytest-asyncio` + `httpx` async client; integration tests hit a real Postgres via testcontainers (Docker must be running)
 
 ## Architecture
 
 **Simple modular monolith — one deployable, one process.** The FastAPI app (`api/`) handles everything: auth, tests, sessions, auto-grading, progress, media, and AI grading. Business logic lives in `core/` (models, schemas, services, db, settings, ai).
 
-AI grading (model evaluation via OpenRouter) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (`processing → ready | failed`), so no Redis or queue is needed.
+AI grading (model evaluation via OpenRouter) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (internal status `processing → ready | failed`), so no Redis or queue is needed. Speaking is graded by teachers (see Roles & human grading).
 
 > **Deferred until scaling is needed:** a separate worker process + job queue (e.g. ARQ on Redis). The grading code lives in `core/services/` precisely so it can later be called from a worker instead of a background task without rewriting it.
 
@@ -38,7 +38,7 @@ Cost-optimized, Cloudflare-centric (Cloudflare's own compute can't run async Pyt
 - **Local parity**: Docker Compose runs Postgres + MinIO (R2/S3-compatible stand-in)
 
 ```
-backend/
+ielts-backend/
 ├── api/                  # FastAPI app (HTTP layer)
 │   ├── routers/          # endpoint modules per domain
 │   ├── deps.py           # FastAPI dependencies (auth, db session)
@@ -49,7 +49,10 @@ backend/
 │   ├── services/         # business logic (grading, AI prompts)
 │   ├── db.py             # async engine + session factory
 │   ├── settings.py       # Pydantic Settings (env vars)
-│   └── ai/               # OpenRouter client, prompts, rubrics
+│   ├── exceptions.py     # AppError hierarchy → HTTP mapping
+│   ├── logging.py        # structlog + request-id middleware
+│   ├── cli.py            # admin CLI (set-role)
+│   └── ai/               # OpenRouter client, prompts, rubrics (planned)
 ├── alembic/              # migrations
 ├── tests/
 └── pyproject.toml
@@ -123,11 +126,11 @@ The product is freemium. Limits apply **only to Writing and Speaking**; Reading/
 
 - `uv sync` — install deps
 - `docker compose up -d` — start Postgres + MinIO locally
-- `uvicorn api.main:app --reload` — run the app (the only process)
-- `alembic upgrade head` — migrate DB
-- `python -m core.cli set-role <email> <role>` — set a user's role (bootstrap the first admin)
-- `pytest` — run tests
-- `ruff check . && ruff format --check . && mypy .` — lint + format check
+- `uv run uvicorn api.main:app --reload` — run the app (the only process)
+- `uv run alembic upgrade head` — migrate DB
+- `uv run python -m core.cli set-role <email> <role>` — set a user's role (bootstrap the first admin)
+- `uv run pytest` — run tests (Docker must be running)
+- `uv run ruff check . && uv run ruff format --check . && uv run mypy .` — lint + format + type check
 
 ## Things to check before implementation
 

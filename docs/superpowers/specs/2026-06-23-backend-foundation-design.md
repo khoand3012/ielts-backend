@@ -1,7 +1,8 @@
 # IELTS Backend — Design & Build-Out Plan
 
 **Date:** 2026-06-23
-**Status:** Approved (design); Foundation phase implemented.
+**Status:** Approved (design). Implemented: Foundation (phase 1) and Roles & admin users
+(phase 2).
 **Revised 2026-10-20:** simplified to a **single-process monolith** — the separate
 ARQ worker and Redis were removed so the whole system is one FastAPI app plus
 Postgres (and R2 for files). A worker + queue is deferred until scaling needs it
@@ -30,7 +31,8 @@ is deployable, and honors the contract the Next.js frontend depends on.
 - **Polling** (not SSE) to deliver async AI results to the frontend for v1.
 - **Single-process monolith** (revised 2026-10-20): AI grading runs as in-process
   background tasks tracked in Postgres. No Redis, no ARQ, no worker — yet.
-- **Freemium** product: unlimited auto-graded tests; daily-capped AI-graded tests.
+- **Freemium** product: unlimited auto-graded tests (Reading/Listening); daily-capped
+  Writing and Speaking tests.
 
 ---
 
@@ -87,12 +89,12 @@ Pinned so the two greenfield repos don't drift:
 - **Auth** — JWT **access (15 min) + refresh (30 day)**, refresh **rotates on
   use**, consumed behind the Next.js httpOnly-cookie proxy.
 - **Uploads** — pre-signed **R2 PUT** URLs; backend never proxies upload bytes.
-- **Async AI results** — **polling**: frontend `GET`s the assessment/results
-  endpoint until status flips `processing → ready`. SSE/WebSocket noted as a
-  future enhancement (e.g. live grading progress) — not v1.
-- **Path note:** both `CLAUDE.md` files reference `../frontend` / `../backend`,
-  but the real directories are `ielts-frontend` / `ielts-backend`. Any codegen or
-  cross-repo path must use the real names.
+- **Async results** — **polling**: frontend `GET`s the session result endpoint
+  until the student-facing status flips `being_graded → graded` (same for AI and
+  teacher grading). SSE/WebSocket noted as a future enhancement (e.g. live grading
+  progress) — not v1.
+- **Paths:** the sibling repos are `ielts-frontend` / `ielts-backend`; any codegen
+  or cross-repo path must use those names.
 
 ---
 
@@ -110,8 +112,9 @@ no worker:
    `BackgroundTasks`), and returns immediately.
 3. The background task runs `core/services/grading`: the AI model (via OpenRouter) evaluates the
    text → write scores + raw response to the row; flip status to `ready`.
-4. Frontend **polls** until the row is `ready` (or `failed`); shows bands +
-   per-criterion breakdown + feedback.
+4. Frontend **polls** until the student-facing status is `graded`; shows bands +
+   per-criterion breakdown + feedback. A job that fails all attempts is handed to
+   a teacher, so the student keeps seeing `being_graded` instead of an error.
 
 **The `AIAssessment` row is the job record.** That gives us, without a queue:
 
@@ -170,28 +173,29 @@ is always unlimited.
 
 ## 7. Build phases (roadmap)
 
-1. **Foundation** — fully specced in §8.
-1b. **Roles & admin users** — `users.role` (student/teacher/admin), role checks,
+1. **Foundation** — fully specced in §8. *(done)*
+2. **Roles & admin users** — `users.role` (student/teacher/admin), role checks,
    admin user management, first-admin CLI, band arithmetic. Plan:
-   `plans/2026-10-24-roles-and-admin-users.md`.
-2. **Test content & sessions** — Test/Section/Question/TestSession/Answer
+   `plans/2026-10-24-roles-and-admin-users.md`. *(done)*
+3. **Test content & sessions** — Test/Section/Question/TestSession/Answer
    models, content read endpoints, session lifecycle with server-enforced timers.
-3. **Auto-grading** — Reading + Listening synchronous scoring.
-4. **AI pipeline (Writing only)** — `core/ai`, `AIAssessment`, in-process background grading
-   task (§5), mandatory prompt caching, retry + `failed` status, startup resume
-   of stuck rows, polling result delivery.
-5. **Entitlements** — per-skill daily quotas, `plan` gate at submission (§6).
-6. **Media** — R2 pre-signed PUT URLs; **R2 bucket CORS** for browser uploads.
-6b. **Human grading** — teacher queue for Speaking and requested/failed
+4. **Auto-grading** — Reading + Listening synchronous scoring.
+5. **AI pipeline (Writing only)** — `core/ai` OpenRouter client, `AIAssessment`,
+   in-process background grading task (§5), mandatory prompt caching, retries,
+   hand-off to teachers on final failure, startup resume of stuck rows, polling
+   result delivery.
+6. **Entitlements** — per-skill daily quotas, `plan` gate at submission (§6).
+7. **Media** — R2 pre-signed PUT URLs; **R2 bucket CORS** for browser uploads.
+8. **Human grading** — teacher queue for Speaking and requested/failed
    Writing, claims, drafts, admin results + overview
-   (`specs/2026-10-24-human-grading-design.md`). Needs phases 2, 4, 5, 6.
-7. **Progress dashboard** — band-score trends per skill, weak areas.
-8. *(later)* **Stripe billing.**
-9. *(later)* **Deploy** to Fly.io + Cloudflare.
-10. *(later, only when needed)* **Scale out grading** — add a job queue + separate
+   (`specs/2026-10-24-human-grading-design.md`). Needs phases 3, 5, 6, 7.
+9. **Progress dashboard** — band-score trends per skill, weak areas.
+10. *(later)* **Stripe billing.**
+11. *(later)* **Deploy** to Fly.io + Cloudflare.
+12. *(later, only when needed)* **Scale out grading** — add a job queue + separate
     worker process (§5, "When to add a worker").
 
-Each phase (2–9) gets its own dated spec → plan → build cycle.
+Each remaining phase (3–11) gets its own dated spec → plan → build cycle.
 
 ---
 
@@ -262,7 +266,7 @@ ielts-backend/
 
 ## 9. Open items for implementation planning
 
-- Pick the UUIDv7 library (`uuid-utils` vs `uuid6`).
+- ~~Pick the UUIDv7 library~~ — resolved: `uuid-utils`.
 - Confirm CORS posture: browser→Next→backend is same-origin (cookie proxy), so
   API CORS may be unnecessary; the CORS that matters is **R2 bucket CORS** for
   pre-signed browser uploads (Media phase).

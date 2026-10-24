@@ -5,8 +5,10 @@ Reading/Listening, and orchestrates grading of Writing (AI via OpenRouter) and S
 
 The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API exposed here.
 
-> **Status:** Foundation phase. Auth (register/login/refresh/logout/me), account roles with admin
-> user management, and health checks are implemented. Test content, sessions, grading, AI assessment, and entitlements are not yet built.
+> **Status:** Foundation phase. Implemented: auth (register/login/refresh/logout/me), account roles
+> with admin user management, the first-admin CLI, IELTS band arithmetic, and health checks.
+> Not yet built: test content, sessions, auto-grading, AI grading, human (teacher) grading,
+> entitlements, and media uploads.
 
 ## Stack
 
@@ -17,9 +19,9 @@ The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API ex
 | ORM | SQLAlchemy 2.0 (async) + Alembic |
 | Validation | Pydantic v2 |
 | Database | PostgreSQL 15+ |
-| Background jobs | In-process (`BackgroundTasks`), state tracked in Postgres |
+| Background jobs | In-process (`BackgroundTasks`), state tracked in Postgres *(planned)* |
 | Object storage | Cloudflare R2 (S3-compatible) |
-| AI grading | OpenRouter (default model `deepseek/deepseek-v4.1-flash-1017`) |
+| AI grading | OpenRouter, Writing only (default model `deepseek/deepseek-v4.1-flash-1017`) *(planned)* |
 | Auth | JWT (`python-jose`) + `argon2-cffi` |
 | Packaging | `uv` |
 | Lint / types | `ruff` + `mypy` (strict) |
@@ -31,9 +33,9 @@ A simple modular monolith: **one deployable, one process.** The FastAPI app in `
 layer; business logic lives in `core/`. The only backing services are Postgres and R2 (MinIO
 locally).
 
-AI grading (later phases) will run as an in-process background task after the request returns,
-with the `AIAssessment` row in Postgres acting as the job record. A separate worker + queue is
-deliberately deferred until load requires it.
+AI grading of Writing (later phases) will run as an in-process background task after the request
+returns, with the `AIAssessment` row in Postgres acting as the job record. Speaking is graded by
+teachers. A separate worker + queue is deliberately deferred until load requires it.
 
 ```
 ├── api/          # FastAPI app
@@ -45,6 +47,7 @@ deliberately deferred until load requires it.
 │   ├── schemas/  # Pydantic schemas
 │   ├── services/ # business logic
 │   ├── db.py     # async engine + session factory
+│   ├── cli.py    # admin CLI (set-role)
 │   └── settings.py
 ├── alembic/      # migrations
 └── tests/
@@ -63,6 +66,12 @@ services below, so they work as-is for local development:
 
 ```bash
 cp .env.example .env
+```
+
+Replace the `JWT_SECRET` placeholder with a long random value:
+
+```bash
+uv run python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
 Start Postgres and MinIO (an R2/S3 stand-in):
@@ -161,7 +170,7 @@ uv run pytest
 
 Integration tests run against a **real Postgres** via `testcontainers`, so **Docker must be
 running** — without it, every DB-backed test errors at fixture setup. Only external APIs
-(OpenRouter, R2) are mocked.
+(OpenRouter, R2) are ever mocked.
 
 Fixtures and tests share a single session-scoped event loop
 (`asyncio_default_fixture_loop_scope` / `asyncio_default_test_loop_scope` in `pyproject.toml`).
@@ -188,11 +197,15 @@ does not prove the migrations are correct.
 
 Cost-optimized and Cloudflare-centric:
 
-- **Compute** — Fly.io: one image, one process (the API)
+- **Compute** — Fly.io: one image, one process (the API), exactly one always-on machine — the
+  planned startup sweep that resumes interrupted AI grading assumes a single machine
 - **Edge** — Cloudflare in front of the API; R2 assets served via signed URLs
 - **Postgres** — Neon, **pooled endpoint** (PgBouncer transaction mode). `statement_cache_size=0`
   is set on the engine because asyncpg prepared statements are unsupported there
 - **Migrations** — Alembic as a Fly release command; never on boot
+- **Secrets** — set with `fly secrets set` (e.g. `JWT_SECRET`, `OPENROUTER_API_KEY`), never committed
+- **First admin** — register, then run
+  `fly ssh console -C "python -m core.cli set-role <email> admin"`
 
 CI (GitHub Actions) runs `uv sync --frozen`, `ruff check`, `ruff format --check`, `mypy`, and
 `pytest` on pushes to `main` and on every pull request.
