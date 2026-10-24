@@ -28,7 +28,7 @@ os.environ.setdefault("R2_ENDPOINT_URL", "http://localhost:9000")
 os.environ.setdefault("R2_ACCESS_KEY_ID", "x")
 os.environ.setdefault("R2_SECRET_ACCESS_KEY", "x")
 os.environ.setdefault("R2_BUCKET", "x")
-os.environ.setdefault("ANTHROPIC_API_KEY", "x")
+os.environ.setdefault("OPENROUTER_API_KEY", "x")
 
 
 @pytest.fixture(scope="session")

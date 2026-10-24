@@ -1,6 +1,6 @@
 # IELTS Practice — Backend
 
-Python backend for an IELTS practice platform. Serves test content, manages sessions, auto-grades Reading/Listening, and orchestrates grading of Writing (Claude) and Speaking.
+Python backend for an IELTS practice platform. Serves test content, manages sessions, auto-grades Reading/Listening, and orchestrates grading of Writing (AI via OpenRouter) and Speaking.
 
 The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST API consumed by it.
 
@@ -13,7 +13,7 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 - **Database**: PostgreSQL 15+ (also the record of AI grading job state — no Redis/queue in v1)
 - **Background jobs**: in-process `asyncio` tasks inside the API (FastAPI `BackgroundTasks`) for AI assessment
 - **Object storage**: Cloudflare R2 (S3-compatible) via `aioboto3` (audio uploads, test assets) — only the endpoint/credentials differ from S3; code is identical
-- **AI grading**: Anthropic SDK (`anthropic`) — model `claude-sonnet-4-6`
+- **AI grading**: OpenRouter (OpenAI-compatible chat completions API) via `httpx.AsyncClient` — default model `deepseek/deepseek-v4.1-flash-1017`, overridable with `AI_MODEL`
 - **Auth**: JWT (access + refresh) via `python-jose`; passwords with `argon2-cffi`
 - **Dependency / packaging**: `uv` (fast resolver) + `pyproject.toml`
 - **Lint / format**: `ruff` (lint + format) + `mypy` (strict)
@@ -23,7 +23,7 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 
 **Simple modular monolith — one deployable, one process.** The FastAPI app (`api/`) handles everything: auth, tests, sessions, auto-grading, progress, media, and AI grading. Business logic lives in `core/` (models, schemas, services, db, settings, ai).
 
-AI grading (Claude evaluation) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (`processing → ready | failed`), so no Redis or queue is needed.
+AI grading (model evaluation via OpenRouter) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (`processing → ready | failed`), so no Redis or queue is needed.
 
 > **Deferred until scaling is needed:** a separate worker process + job queue (e.g. ARQ on Redis). The grading code lives in `core/services/` precisely so it can later be called from a worker instead of a background task without rewriting it.
 
@@ -49,7 +49,7 @@ backend/
 │   ├── services/         # business logic (grading, AI prompts)
 │   ├── db.py             # async engine + session factory
 │   ├── settings.py       # Pydantic Settings (env vars)
-│   └── ai/               # Claude client, prompts, rubrics
+│   └── ai/               # OpenRouter client, prompts, rubrics
 ├── alembic/              # migrations
 ├── tests/
 └── pyproject.toml
@@ -86,7 +86,7 @@ Full design: `docs/superpowers/specs/2026-10-24-human-grading-design.md`.
 - **Time** stored as `TIMESTAMPTZ` (UTC) in Postgres; never naive datetimes
 - **IDs** UUIDv7 (sortable) for primary keys, not auto-increment integers
 - **Errors** raise typed exceptions in services; an exception handler maps them to HTTP responses — do not raise `HTTPException` from services
-- **Tests** prefer integration tests against a real Postgres over mocks; mock only external APIs (Anthropic, R2)
+- **Tests** prefer integration tests against a real Postgres over mocks; mock only external APIs (OpenRouter, R2)
 - **No print/logger.info debugging** left in committed code — use structured logging via `structlog`
 
 ## AI grading
@@ -94,9 +94,9 @@ Full design: `docs/superpowers/specs/2026-10-24-human-grading-design.md`.
 AI grading covers **Writing only** (Speaking is graded by teachers).
 
 - Prompts and IELTS band rubrics live in `core/ai/prompts/` — version them, do not inline in service code
-- **Prompt caching is mandatory** — the IELTS rubric system prompt is large and reused on every grading call; mark it with `cache_control` to cut cost and latency dramatically
-- Claude is called with **structured outputs** (tool use) to return JSON: per-criterion band scores + overall + feedback bullets
-- Writing: send full text to Claude
+- **Prompt caching is mandatory** — the IELTS rubric system prompt is large and reused on every grading call; send it as an identical, unchanging prefix (system message first, student text last) so the provider's automatic prefix caching applies (DeepSeek caches repeated prefixes automatically). If `AI_MODEL` is switched to a provider that needs explicit `cache_control` breakpoints (e.g. Anthropic, Gemini), add them
+- The model is called with **structured outputs** (`response_format` JSON schema, or tool calling) to return JSON: per-criterion band scores + overall + feedback bullets; always validate the JSON with Pydantic, and check a new `AI_MODEL` supports structured outputs on OpenRouter before switching
+- Writing: send full text to the model
 - Always store the raw model response alongside the parsed result for debugging and re-evaluation
 - Grading runs as an in-process background task: up to 3 attempts with exponential backoff; on final failure the `AIAssessment` row is marked `failed` with the error stored **and** the test is handed to the teacher queue as a `HumanGrade(origin=ai_fallback)` (unless `AI_FAILURE_FALLBACK_TO_TEACHER` is off)
 - In-process tasks die with the process — on startup, re-run any `AIAssessment` rows stuck in `processing` (never `failed` ones) so a deploy/restart never strands a grading job. This assumes a single machine — revisit (lease/stale threshold or a real worker) before running more than one
@@ -116,7 +116,7 @@ The product is freemium. Limits apply **only to Writing and Speaking**; Reading/
 - **Reset** — fixed daily reset (e.g. midnight UTC); stored as a counter keyed by `(user, skill, day)`
 - **Pools** — separate per skill (independent Writing and Speaking counters)
 - **Limits** — tunable via settings, not hardcoded. Defaults: free 3/day each; paid 30/day each (a high ceiling, not unlimited, so even paid users retain cost protection)
-- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)` is called at **submission**, before the grading task is started and before any Anthropic spend. Over limit → typed `QuotaExceededError` → HTTP 402/429 with a `resets_at` timestamp
+- **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)` is called at **submission**, before the grading task is started and before any AI spend. Over limit → typed `QuotaExceededError` → HTTP 402/429 with a `resets_at` timestamp
 - **Billing** — tiers modeled now; Stripe (Checkout + webhooks + portal) is a later phase. Upgrades are set manually/admin for now
 
 ## Commands

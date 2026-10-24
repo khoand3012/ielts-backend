@@ -1,7 +1,7 @@
 # IELTS Practice — Backend
 
 Python backend for an IELTS practice platform. Serves test content, manages sessions, auto-grades
-Reading/Listening, and orchestrates grading of Writing (Claude) and Speaking.
+Reading/Listening, and orchestrates grading of Writing (AI via OpenRouter) and Speaking.
 
 The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API exposed here.
 
@@ -19,7 +19,7 @@ The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API ex
 | Database | PostgreSQL 15+ |
 | Background jobs | In-process (`BackgroundTasks`), state tracked in Postgres |
 | Object storage | Cloudflare R2 (S3-compatible) |
-| AI grading | Anthropic SDK (`claude-sonnet-4-6`) |
+| AI grading | OpenRouter (default model `deepseek/deepseek-v4.1-flash-1017`) |
 | Auth | JWT (`python-jose`) + `argon2-cffi` |
 | Packaging | `uv` |
 | Lint / types | `ruff` + `mypy` (strict) |
@@ -118,8 +118,9 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `R2_ACCESS_KEY_ID` | yes | — | R2 access key |
 | `R2_SECRET_ACCESS_KEY` | yes | — | R2 secret key |
 | `R2_BUCKET` | yes | — | Bucket for audio and test assets |
-| `ANTHROPIC_API_KEY` | yes | — | Claude API key (AI grading) |
+| `OPENROUTER_API_KEY` | yes | — | OpenRouter API key (AI grading) |
 | `ENV` | no | `local` | Environment name |
+| `AI_MODEL` | no | `deepseek/deepseek-v4.1-flash-1017` | OpenRouter model ID used for AI grading |
 | `JWT_ALGORITHM` | no | `HS256` | JWT signing algorithm |
 | `ACCESS_TOKEN_TTL_SECONDS` | no | `900` | Access token lifetime (15 min) |
 | `REFRESH_TOKEN_TTL_SECONDS` | no | `2592000` | Refresh token lifetime (30 days) |
@@ -160,7 +161,7 @@ uv run pytest
 
 Integration tests run against a **real Postgres** via `testcontainers`, so **Docker must be
 running** — without it, every DB-backed test errors at fixture setup. Only external APIs
-(Anthropic, R2) are mocked.
+(OpenRouter, R2) are mocked.
 
 Fixtures and tests share a single session-scoped event loop
 (`asyncio_default_fixture_loop_scope` / `asyncio_default_test_loop_scope` in `pyproject.toml`).

@@ -46,7 +46,7 @@ Modular monolith — **one deployable, one process**. `api/` is the HTTP layer;
 | `core/models` | SQLAlchemy models (UUIDv7 PKs, TIMESTAMPTZ) | db |
 | `core/schemas` | Pydantic v2 request/response DTOs | — |
 | `core/services` | business logic; raises typed exceptions | models, schemas |
-| `core/ai` | Claude client, prompts, rubrics | settings |
+| `core/ai` | OpenRouter client, prompts, rubrics | settings |
 | `api` | FastAPI HTTP layer, routers, deps, exc handlers; starts grading background tasks | core |
 
 All durable state lives in Postgres and object storage. The one in-memory thing
@@ -108,7 +108,7 @@ no worker:
 2. API checks entitlements (§6), inserts an `AIAssessment` row with status
    `processing`, schedules the grading coroutine as a background task (FastAPI
    `BackgroundTasks`), and returns immediately.
-3. The background task runs `core/services/grading`: Claude evaluates the
+3. The background task runs `core/services/grading`: the AI model (via OpenRouter) evaluates the
    text → write scores + raw response to the row; flip status to `ready`.
 4. Frontend **polls** until the row is `ready` (or `failed`); shows bands +
    per-criterion breakdown + feedback.
@@ -129,7 +129,7 @@ no worker:
 
 **Known trade-offs (accepted for v1):** grading shares CPU/event loop and
 connection pool with HTTP traffic; you can't scale grading separately from the
-API; long Claude calls hold a coroutine (cheap — they're I/O-bound).
+API; long model calls hold a coroutine (cheap — they're I/O-bound).
 
 **When to add a worker:** if grading load starts slowing HTTP responses, or we
 need more than one API machine. Then: add a queue (ARQ on Redis
@@ -145,7 +145,7 @@ workload.
 
 ## 6. Freemium / entitlements model
 
-Limits apply **only to Writing and Speaking**: the Writing limit caps Claude
+Limits apply **only to Writing and Speaking**: the Writing limit caps AI
 spend, the Speaking limit caps teacher workload. Reading/Listening auto-grading
 is always unlimited.
 
@@ -159,7 +159,7 @@ is always unlimited.
     even paid users retain CLAUDE.md's cost-protection guarantee)
 - **Enforcement** — `core/services/entitlements.check_and_consume(user, skill)`
   is called at **submission**, *before* the grading task starts and before any
-  Anthropic spend.
+  AI spend.
   Reading/Listening bypass it. Over limit → typed `QuotaExceededError` → HTTP
   **402/429** with a `resets_at` timestamp the frontend displays.
 - **Billing** — **tiers modeled now; payments deferred.** Upgrade is set
@@ -215,7 +215,7 @@ ielts-backend/
 │   ├── deps.py                 # get_db, get_current_user
 │   └── routers/{auth.py, health.py}
 ├── core/
-│   ├── settings.py             # pydantic-settings: DB, R2, Anthropic, JWT, plan limits
+│   ├── settings.py             # pydantic-settings: DB, R2, OpenRouter, JWT, plan limits
 │   ├── db.py                   # async engine (asyncpg) + session factory + Base
 │   ├── logging.py              # structlog config + request-id middleware
 │   ├── exceptions.py           # AppError hierarchy → HTTP mapping

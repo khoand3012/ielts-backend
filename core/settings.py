@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     r2_secret_access_key: str
     r2_bucket: str
 
-    anthropic_api_key: str
+    openrouter_api_key: str
+    ai_model: str = "deepseek/deepseek-v4.1-flash-1017"
 
     free_writing_daily: int = 3
     free_speaking_daily: int = 3
