@@ -9,18 +9,53 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ielts -d ielts"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
 
+  # minio/minio was removed from Docker Hub; Bitnami's frozen build is the same server.
   minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
+    image: bitnamilegacy/minio:2025.7.23
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_DEFAULT_BUCKETS: ielts-assets
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - miniodata:/data
+      - miniodata:/bitnami/minio/data
+
+  # One-shot, like the Fly release command: migrations never run on API boot.
+  migrate:
+    build: .
+    image: ielts-backend
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ielts:ielts@postgres:5432/ielts
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # R2_ENDPOINT_URL stays http://localhost:9000 from .env: the API only signs URLs (no network
+  # call) and the browser must be able to reach them. Uploads happen in `core.cli load-test`,
+  # which runs on the host.
+  api:
+    build: .
+    image: ielts-backend
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ielts:ielts@postgres:5432/ielts
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_started
 
 volumes:
   pgdata:
