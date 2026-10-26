@@ -130,9 +130,7 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `R2_SECRET_ACCESS_KEY` | yes | — | R2 secret key |
 | `R2_BUCKET` | yes | — | Bucket for audio and test assets |
 | `OPENROUTER_API_KEY` | yes | — | OpenRouter API key (AI grading) |
-| `ENV` | no | `local` | Environment name |
 | `AI_MODEL` | no | `deepseek/deepseek-v4.1-flash-1017` | OpenRouter model ID used for AI grading |
-| `JWT_ALGORITHM` | no | `HS256` | JWT signing algorithm |
 | `ACCESS_TOKEN_TTL_SECONDS` | no | `900` | Access token lifetime (15 min) |
 | `REFRESH_TOKEN_TTL_SECONDS` | no | `2592000` | Refresh token lifetime (30 days) |
 | `FREE_WRITING_DAILY` | no | `3` | Free-tier Writing assessments per day |
@@ -141,6 +139,8 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `PAID_SPEAKING_DAILY` | no | `30` | Paid-tier Speaking assessments per day |
 | `READING_TIME_LIMIT_MINUTES` / `LISTENING_…` / `WRITING_…` / `SPEAKING_…` | no | `60` / `32` / `60` / `20` | Exam-mode time limits |
 | `SESSION_GRACE_SECONDS` | no | `30` | Saves this long after the deadline still count |
+| `MAX_TEXT_ANSWER_CHARS` | no | `200` | Longest accepted answer to a short text question |
+| `MAX_ESSAY_CHARS` | no | `20000` | Longest accepted Writing essay |
 | `AUTO_SUBMIT_ENABLED` | no | `true` | Run the in-process loop that submits expired exam sessions |
 | `AUTO_SUBMIT_INTERVAL_SECONDS` | no | `60` | How often that loop runs |
 | `SIGNED_URL_TTL_SECONDS` | no | `14400` | Lifetime of signed asset URLs in test content (longer than the longest exam) |

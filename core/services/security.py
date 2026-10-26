@@ -11,6 +11,8 @@ from core.settings import get_settings
 
 _settings = get_settings()
 _hasher = PasswordHasher()
+# HMAC only: JWT_SECRET is a shared secret, so an asymmetric algorithm can't use it.
+_ALGORITHM = "HS256"
 
 
 def hash_password(plain: str) -> str:
@@ -36,7 +38,7 @@ def create_access_token(subject: str) -> str:
         "exp": expire,
         "jti": str(uuid.uuid4()),
     }
-    return cast(str, jwt.encode(payload, _settings.jwt_secret, algorithm=_settings.jwt_algorithm))
+    return cast(str, jwt.encode(payload, _settings.jwt_secret, algorithm=_ALGORITHM))
 
 
 def create_refresh_token(subject: str) -> tuple[str, str, datetime]:
@@ -48,7 +50,7 @@ def create_refresh_token(subject: str) -> tuple[str, str, datetime]:
         "exp": expire,
         "jti": jti,
     }
-    token = cast(str, jwt.encode(payload, _settings.jwt_secret, algorithm=_settings.jwt_algorithm))
+    token = cast(str, jwt.encode(payload, _settings.jwt_secret, algorithm=_ALGORITHM))
     return token, jti, expire
 
 
@@ -56,7 +58,7 @@ def decode_token(token: str) -> dict[str, Any]:
     try:
         return cast(
             dict[str, Any],
-            jwt.decode(token, _settings.jwt_secret, algorithms=[_settings.jwt_algorithm]),
+            jwt.decode(token, _settings.jwt_secret, algorithms=[_ALGORITHM]),
         )
     except JWTError as exc:
         raise AuthError("invalid or expired token") from exc
