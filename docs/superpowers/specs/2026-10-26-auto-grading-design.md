@@ -3,7 +3,7 @@
 **Date:** 2026-10-26
 **Status:** Approved 2026-10-26 (open questions answered by the product owner:
 band tables, answer matching incl. curly apostrophes, recovery after a scoring
-failure, bands for partial practice). Plan: `plans/2026-10-26-auto-grading.md`.
+failure, bands for partial practice); implemented (plan `plans/2026-10-26-auto-grading.md`).
 **Roadmap:** phase 4 of `specs/2026-06-23-backend-foundation-design.md` §7.
 **Builds on:** `specs/2026-10-24-tests-and-sessions-design.md` (Epic A) and the
 result endpoint planned in `specs/2026-10-24-human-grading-design.md` §9.

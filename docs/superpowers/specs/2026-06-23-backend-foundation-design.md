@@ -182,7 +182,10 @@ is always unlimited.
    Entitlements daily limits, now checked at session start (§6). Spec
    `specs/2026-10-24-tests-and-sessions-design.md`, plan
    `plans/2026-10-24-tests-and-sessions.md`. *(done)*
-4. **Auto-grading** — Reading + Listening synchronous scoring.
+4. **Auto-grading** — Reading + Listening synchronous scoring, Academic/General
+   Training Reading, result endpoint, startup scoring sweep. Spec
+   `specs/2026-10-26-auto-grading-design.md`, plan
+   `plans/2026-10-26-auto-grading.md`. *(done)*
 5. **AI pipeline (Writing only)** — `core/ai` OpenRouter client, `AIAssessment`,
    in-process background grading task (§5), mandatory prompt caching, retries,
    hand-off to teachers on final failure, startup resume of stuck rows, polling

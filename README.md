@@ -7,8 +7,9 @@ The frontend lives at `../ielts-frontend` (Next.js) and consumes the REST API ex
 
 > **Status:** Implemented: auth (register/login/refresh/logout/me), account roles with admin user
 > management, IELTS band arithmetic, versioned single-skill tests loaded by CLI, test sessions
-> (practice/exam, autosave, server deadlines, auto-submit), Writing/Speaking daily limits, and
-> health checks. Not yet built: scoring (auto, AI, teacher), admin test upload (AI import),
+> (practice/exam, autosave, server deadlines, auto-submit), Writing/Speaking daily limits,
+> Reading/Listening auto-grading (raw mark + band at submission, result endpoint), and health
+> checks. Not yet built: Writing/Speaking grading (AI, teacher), admin test upload (AI import),
 > student recording uploads (Speaking sessions can't start until then).
 
 ## Stack
@@ -161,14 +162,15 @@ Never commit a real `.env`.
 | `GET` | `/auth/me` | Current user (requires bearer token) |
 | `GET` | `/admin/users` | Admin: list/search users (`q`, `role`, `limit` ≤ 100, `offset`) |
 | `PATCH` | `/admin/users/{user_id}` | Admin: change a user's `role` and/or `plan` |
-| `GET` | `/tests` | Published tests (`skill`, `limit`, `offset`); no content |
+| `GET` | `/tests` | Published tests (`skill`, `module`, `limit`, `offset`); no content |
 | `GET` | `/tests/{test_id}` | One published test's summary |
 | `POST` | `/sessions` | Start a session (`test_id`, `mode`); returns content without answers. 429 over the daily limit |
-| `GET` | `/sessions` | My sessions, newest first |
+| `GET` | `/sessions` | My sessions, newest first, with the raw mark and band once scored |
 | `GET` | `/sessions/{id}` | Session + content + saved answers (resume) |
 | `PUT` | `/sessions/{id}/answers` | Autosave answers (`null` clears one); 409 once closed |
 | `PATCH` | `/sessions/{id}` | Writing: `request_manual_grading` |
-| `POST` | `/sessions/{id}/submit` | Submit early |
+| `POST` | `/sessions/{id}/submit` | Submit early; Reading/Listening come back already scored |
+| `GET` | `/sessions/{id}/result` | Result: mark, band and per-question answers with the answer key (submitted sessions only; 409 before) |
 
 Access tokens live 15 minutes, refresh tokens 30 days. Refresh tokens **rotate on use** — the
 presented token is revoked as the new pair is issued, so replaying an old one returns 401.
