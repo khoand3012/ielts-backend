@@ -8,6 +8,13 @@ class Skill(StrEnum):
     SPEAKING = "speaking"
 
 
+class Module(StrEnum):
+    """Which Reading test a version is: it picks the raw-mark band table."""
+
+    ACADEMIC = "academic"
+    GENERAL_TRAINING = "general_training"
+
+
 class VersionStatus(StrEnum):
     DRAFT = "draft"
     PUBLISHED = "published"
