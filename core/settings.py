@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     # In-process loop that submits exam sessions whose time ran out (one app process).
     auto_submit_enabled: bool = True
     auto_submit_interval_seconds: float = 60
+    # On startup, score Reading/Listening sessions that have no score yet (one app process).
+    startup_scoring_enabled: bool = True
 
 
 @lru_cache

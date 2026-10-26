@@ -112,6 +112,7 @@ After that, admins manage other users' roles through `PATCH /admin/users/{user_i
 | `uv run alembic upgrade head` | Apply migrations |
 | `uv run python -m core.cli set-role <email> <role>` | Set a user's role (`student`/`teacher`/`admin`) |
 | `uv run python -m core.cli load-test <file.json> [--publish]` | Load a test as a draft (and publish it if it has no problems) |
+| `uv run python -m core.cli regrade-auto [--all]` | Score Reading/Listening sessions with no score; `--all` re-scores every one |
 | `uv run alembic revision --autogenerate -m "msg"` | Create a migration |
 | `uv run pytest` | Run tests |
 | `uv run ruff check . && uv run ruff format --check . && uv run mypy .` | Lint, format, type check |
@@ -143,6 +144,7 @@ All settings are read through `core/settings.py` (`pydantic-settings`); nothing 
 | `MAX_ESSAY_CHARS` | no | `20000` | Longest accepted Writing essay |
 | `AUTO_SUBMIT_ENABLED` | no | `true` | Run the in-process loop that submits expired exam sessions |
 | `AUTO_SUBMIT_INTERVAL_SECONDS` | no | `60` | How often that loop runs |
+| `STARTUP_SCORING_ENABLED` | no | `true` | On startup, score Reading/Listening sessions left unscored (e.g. by a scoring bug) |
 | `SIGNED_URL_TTL_SECONDS` | no | `14400` | Lifetime of signed asset URLs in test content (longer than the longest exam) |
 
 Never commit a real `.env`.
@@ -213,7 +215,8 @@ does not prove the migrations are correct.
 Cost-optimized and Cloudflare-centric:
 
 - **Compute** — Fly.io: one image, one process (the API), exactly one always-on machine — the
-  planned startup sweep that resumes interrupted AI grading assumes a single machine
+  startup scoring sweep (and the planned one that resumes interrupted AI grading) assumes a
+  single machine
 - **Edge** — Cloudflare in front of the API; R2 assets served via signed URLs
 - **Postgres** — Neon, **pooled endpoint** (PgBouncer transaction mode). `statement_cache_size=0`
   is set on the engine because asyncpg prepared statements are unsupported there

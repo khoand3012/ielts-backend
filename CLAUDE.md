@@ -23,6 +23,8 @@ The frontend lives at `../ielts-frontend` (Next.js). This folder exposes a REST 
 
 **Simple modular monolith — one deployable, one process.** The FastAPI app (`api/`) handles everything: auth, tests, sessions, auto-grading, progress, media, and AI grading. Business logic lives in `core/` (models, schemas, services, db, settings, ai).
 
+Reading/Listening auto-grading is synchronous: a session is scored inside the transaction that submits it (`on_session_submitted`). If marking throws, the session is still submitted unscored; on startup the app scores every unscored auto session in the background (`run_startup_scoring`, `STARTUP_SCORING_ENABLED`), so the deploy that fixes a scoring bug also fills in its scores.
+
 AI grading (model evaluation via OpenRouter) runs as an in-process background task started after the request returns. The `AIAssessment` row in Postgres *is* the job record (internal status `processing → ready | failed`), so no Redis or queue is needed. Speaking is graded by teachers (see Roles & human grading).
 
 > **Deferred until scaling is needed:** a separate worker process + job queue (e.g. ARQ on Redis). The grading code lives in `core/services/` precisely so it can later be called from a worker instead of a background task without rewriting it.
@@ -131,6 +133,7 @@ The product is freemium. Limits apply **only to Writing and Speaking**; Reading/
 - `uv run alembic upgrade head` — migrate DB
 - `uv run python -m core.cli set-role <email> <role>` — set a user's role (bootstrap the first admin)
 - `uv run python -m core.cli load-test <file.json> [--publish]` — load a test file (e.g. `seed/tests/practice-01-reading.json`) as a draft, optionally publish it
+- `uv run python -m core.cli regrade-auto [--all]` — score Reading/Listening sessions that have no score (the startup sweep does this on every deploy); `--all` re-scores every session after a marking-rule or band-table change
 - `uv run pytest` — run tests (Docker must be running)
 - `uv run ruff check . && uv run ruff format --check . && uv run mypy .` — lint + format + type check
 
