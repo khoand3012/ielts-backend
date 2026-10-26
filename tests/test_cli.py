@@ -101,6 +101,7 @@ async def test_cli_load_test_publishes(
                 "slug": slug,
                 "title": "T",
                 "skill": "reading",
+                "module": "academic",
                 "content": reading_content(),
                 "answer_key": reading_key(),
             }

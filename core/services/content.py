@@ -172,6 +172,16 @@ def _validate_rl(
     for spec in index.values():
         answers = answer_key.get(spec.key, [])
         where = {"section": spec.section, "question": spec.key}
+        if spec.kind != "choice" and len(spec.numbers) != 1:
+            # Otherwise the item could earn only one mark and the test would be worth less than 40.
+            problems.append(
+                Problem(
+                    code="multi_number_item",
+                    message=f"question {spec.key} covers {len(spec.numbers)} numbers; "
+                    "only multiple-choice items may cover several",
+                    **where,
+                )
+            )
         if not answers:
             problems.append(
                 Problem(

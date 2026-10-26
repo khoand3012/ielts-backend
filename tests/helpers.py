@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from core.models import Skill, TestVersion
+from core.models import Module, Skill, TestVersion
 from core.schemas.content import AnswerKey, StaffContent
 from core.services import catalog
 from core.services.content import item_index, parse_content
@@ -32,6 +32,7 @@ async def publish_test(
     slug: str | None = None,
     content: dict[str, Any] | None = None,
     key: AnswerKey | None = None,
+    module: Module | None = None,
 ) -> TestVersion:
     """Save and publish a valid factory test (a new version if `slug` already exists)."""
     make_content, make_key, make_staff = _DEFAULTS[skill]
@@ -43,6 +44,7 @@ async def publish_test(
         content=parse_content(skill, content or make_content()),
         answer_key=make_key() if key is None else key,
         staff_content=StaffContent.model_validate(make_staff()),
+        module=(module or Module.ACADEMIC) if skill == Skill.READING else None,
     )
     return await catalog.publish(db, version.id)
 

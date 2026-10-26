@@ -7,8 +7,8 @@ from pydantic import TypeAdapter
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.exceptions import ConflictError, ContentProblemsError, NotFoundError
-from core.models import Skill, Test, TestVersion, VersionStatus
+from core.exceptions import ConflictError, ContentProblemsError, NotFoundError, ValidationAppError
+from core.models import Module, Skill, Test, TestVersion, VersionStatus
 from core.schemas.content import AnswerKey, Content, Problem, StaffContent
 from core.services.content import parse_content, validate_version
 
@@ -28,6 +28,14 @@ def problems_for(skill: Skill, version: TestVersion) -> list[Problem]:
     return validate_version(skill, load_content(skill, version), load_answer_key(version))
 
 
+def check_module(skill: Skill, module: Module | None) -> None:
+    """Reading tests are Academic or General Training; no other skill has a module."""
+    if skill == Skill.READING and module is None:
+        raise ValidationAppError("reading tests need a module: academic or general_training")
+    if skill != Skill.READING and module is not None:
+        raise ValidationAppError("only reading tests have a module")
+
+
 async def save_draft(
     db: AsyncSession,
     *,
@@ -37,8 +45,10 @@ async def save_draft(
     content: Content,
     answer_key: AnswerKey,
     staff_content: StaffContent,
+    module: Module | None = None,
 ) -> TestVersion:
     """Replace the test's draft, or start a new draft version on top of the latest one."""
+    check_module(skill, module)
     test = await db.scalar(select(Test).where(Test.slug == slug))
     if test is None:
         test = Test(skill=skill, slug=slug, title=title)
@@ -52,6 +62,7 @@ async def save_draft(
         "content": content.model_dump(mode="json"),
         "answer_key": _answer_key.dump_python(answer_key, mode="json"),
         "staff_content": staff_content.model_dump(mode="json"),
+        "module": module,
     }
     draft = await db.scalar(
         select(TestVersion).where(
