@@ -6,7 +6,7 @@ from uuid_utils.compat import uuid7
 from core.models import Skill, TestVersion
 from core.schemas.content import AnswerKey, StaffContent
 from core.services import catalog
-from core.services.content import parse_content
+from core.services.content import item_index, parse_content
 from tests.content_factories import (
     listening_content,
     listening_key,
@@ -45,3 +45,11 @@ async def publish_test(
         staff_content=StaffContent.model_validate(make_staff()),
     )
     return await catalog.publish(db, version.id)
+
+
+def correct_answers(skill: Skill) -> dict[int, str | list[str]]:
+    """Full marks on the factory test of `skill` (reading or listening)."""
+    make_content, make_key, _ = _DEFAULTS[skill]
+    key = make_key()
+    index = item_index(skill, parse_content(skill, make_content()))
+    return {q: list(key[q]) if spec.kind == "choice" else key[q][0] for q, spec in index.items()}
