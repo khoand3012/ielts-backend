@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
-from core.models.enums import Skill, VersionStatus, check_in
+from core.models.enums import Module, Skill, VersionStatus, check_in
 
 
 class Test(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -28,6 +28,7 @@ class TestVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __test__ = False
     __table_args__ = (
         CheckConstraint(check_in("status", VersionStatus), name="status"),
+        CheckConstraint(check_in("module", Module), name="module"),
         UniqueConstraint("test_id", "version", name="uq_test_versions_test_id_version"),
         Index(
             "uq_test_versions_one_draft",
@@ -44,3 +45,5 @@ class TestVersion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     answer_key: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     staff_content: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
+    # Reading only: academic | general_training, picks the band table. Null for other skills.
+    module: Mapped[str | None] = mapped_column(String(32), default=None)
