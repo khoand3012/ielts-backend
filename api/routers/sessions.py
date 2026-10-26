@@ -10,13 +10,15 @@ from core.models import TestSession
 from core.schemas.session import (
     AnswersRequest,
     AnswersResponse,
+    ResultQuestion,
     SessionDetail,
     SessionListResponse,
     SessionRead,
+    SessionResult,
     SessionStartRequest,
     SessionUpdateRequest,
 )
-from core.services import sessions
+from core.services import auto_grading, sessions
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -110,3 +112,49 @@ async def submit_session(
     session_id: uuid.UUID, user: CurrentUser, session: DbSession
 ) -> SessionRead:
     return await _with_test(session, await sessions.submit_session(session, user, session_id))
+
+
+def _question(item: auto_grading.MarkedItem) -> ResultQuestion:
+    return ResultQuestion(
+        number=item.spec.key,
+        numbers=list(item.spec.numbers),
+        kind=item.spec.kind,
+        answer=item.answer,
+        accepted=item.accepted,
+        correct_choices=item.correct_choices,
+        marks=item.marks,
+        max_marks=item.max_marks,
+    )
+
+
+def _result(
+    ts: TestSession, info: sessions.SessionTest, score: auto_grading.Score | None
+) -> SessionResult:
+    return SessionResult(
+        session_id=ts.id,
+        test_id=info.test.id,
+        title=info.test.title,
+        skill=ts.skill,
+        module=info.module,
+        mode=ts.mode,
+        submit_reason=ts.submit_reason,
+        grading_method=ts.grading_method,
+        started_at=ts.started_at,
+        submitted_at=ts.submitted_at,
+        time_spent_seconds=sessions.time_spent_seconds(ts),
+        status="graded" if score else "being_graded",
+        # the stored total, so the result always matches the session list
+        raw_score=ts.raw_score if score else None,
+        max_score=score.max_score if score else None,
+        band=ts.band if score else None,
+        answered=score.answered if score else None,
+        questions=[_question(i) for i in score.items] if score else None,
+    )
+
+
+@router.get("/{session_id}/result", response_model=SessionResult, operation_id="get_session_result")
+async def get_session_result(
+    session_id: uuid.UUID, user: CurrentUser, session: DbSession
+) -> SessionResult:
+    ts, score = await sessions.get_result(session, user, session_id)
+    return _result(ts, (await sessions.tests_for(session, [ts]))[ts.id], score)

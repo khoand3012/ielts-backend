@@ -112,6 +112,28 @@ async def get_session(
     return ts
 
 
+def time_spent_seconds(ts: TestSession) -> int:
+    """Submission minus start, capped at the deadline: the loop can submit up to a minute
+    plus grace late, and a 60-minute exam shouldn't show 61:30."""
+    end = ts.submitted_at or ts.started_at
+    if ts.deadline is not None:
+        end = min(end, ts.deadline)
+    return int((end - ts.started_at).total_seconds())
+
+
+async def get_result(
+    db: AsyncSession, user: User, session_id: uuid.UUID, now: datetime | None = None
+) -> tuple[TestSession, auto_grading.Score | None]:
+    """The caller's submitted session, with its per-question marks when it has been scored.
+    The stored score is the total; the marks are recomputed with the same rules."""
+    ts = await get_session(db, user, session_id, now)
+    if ts.status == SessionStatus.IN_PROGRESS:
+        raise ConflictError("session is not submitted yet")
+    if ts.grading_method != GradingMethod.AUTO or ts.raw_score is None:
+        return ts, None
+    return ts, mark_session(ts, await get_version(db, ts), await get_answers(db, ts))
+
+
 async def list_sessions(
     db: AsyncSession, user: User, *, limit: int = 50, offset: int = 0
 ) -> tuple[list[TestSession], int]:
