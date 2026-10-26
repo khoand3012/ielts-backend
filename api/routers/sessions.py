@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import CurrentUser, DbSession
-from core.models import Test, TestSession
+from core.models import TestSession
 from core.schemas.session import (
     AnswersRequest,
     AnswersResponse,
@@ -21,7 +21,8 @@ from core.services import sessions
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
-def _read(ts: TestSession, test: Test) -> SessionRead:
+def _read(ts: TestSession, info: sessions.SessionTest) -> SessionRead:
+    test = info.test
     return SessionRead(
         id=ts.id,
         test_id=test.id,
@@ -36,6 +37,9 @@ def _read(ts: TestSession, test: Test) -> SessionRead:
         submit_reason=ts.submit_reason,
         request_manual_grading=ts.request_manual_grading,
         grading_method=ts.grading_method,
+        module=info.module,
+        raw_score=ts.raw_score,
+        band=ts.band,
         server_time=datetime.now(UTC),
     )
 

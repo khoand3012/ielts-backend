@@ -133,3 +133,26 @@ async def test_save_draft_checks_module(db_session: AsyncSession) -> None:
             answer_key=reading_key(),
             staff_content=StaffContent(),
         )
+
+
+async def test_list_published_by_module(db_session: AsyncSession) -> None:
+    academic = await catalog.publish(db_session, (await save(db_session, slug())).id)
+    general = await catalog.save_draft(
+        db_session,
+        slug=slug(),
+        title="T",
+        skill=Skill.READING,
+        content=parse_content(Skill.READING, reading_content()),
+        answer_key=reading_key(),
+        staff_content=StaffContent(),
+        module=Module.GENERAL_TRAINING,
+    )
+    general = await catalog.publish(db_session, general.id)
+    page, _ = await catalog.list_published(
+        db_session, skill=Skill.READING, module=Module.GENERAL_TRAINING, limit=100, offset=0
+    )
+    ids = {t.id for t in page}
+    assert general.test_id in ids
+    assert academic.test_id not in ids
+    modules = await catalog.modules_for(db_session, page)
+    assert modules[general.test_id] == "general_training"

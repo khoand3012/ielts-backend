@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import Skill, User
-from tests.helpers import publish_test
+from tests.helpers import correct_answers, publish_test
 
 MakeUser = Callable[..., Awaitable[tuple[User, str]]]
 SECRET_KEYS = {"answer_key", "staff_content", "transcripts"}
@@ -215,3 +215,42 @@ async def test_openapi_has_tags_and_operation_ids(app_client: AsyncClient) -> No
         "update_session",
         "submit_session",
     } <= operation_ids
+
+
+async def test_session_list_carries_band(
+    app_client: AsyncClient, db_session: AsyncSession, make_user: MakeUser
+) -> None:
+    _, tok = await make_user()
+    reading = await start(app_client, db_session, tok, Skill.READING)
+    answers = [{"question": q, "value": v} for q, v in correct_answers(Skill.READING).items()]
+    saved = await app_client.put(
+        f"/sessions/{reading['id']}/answers", json={"answers": answers}, headers=h(tok)
+    )
+    assert saved.status_code == 200, saved.text
+    submitted = (await app_client.post(f"/sessions/{reading['id']}/submit", headers=h(tok))).json()
+    assert (submitted["raw_score"], submitted["band"]) == (40, 9.0)
+
+    writing = await start(app_client, db_session, tok, Skill.WRITING)
+    await app_client.post(f"/sessions/{writing['id']}/submit", headers=h(tok))
+
+    items = {
+        i["id"]: i
+        for i in (await app_client.get("/sessions", params={"limit": 100}, headers=h(tok))).json()[
+            "items"
+        ]
+    }
+    r = items[reading["id"]]
+    assert (r["module"], r["raw_score"], r["band"]) == ("academic", 40, 9.0)
+    assert isinstance(r["band"], float)
+    w = items[writing["id"]]
+    assert (w["module"], w["raw_score"], w["band"]) == (None, None, None)
+
+
+async def test_in_progress_session_has_null_score(
+    app_client: AsyncClient, db_session: AsyncSession, make_user: MakeUser
+) -> None:
+    _, tok = await make_user()
+    body = await start(app_client, db_session, tok, Skill.READING)
+    assert (body["module"], body["raw_score"], body["band"]) == ("academic", None, None)
+    got = (await app_client.get(f"/sessions/{body['id']}", headers=h(tok))).json()
+    assert (got["module"], got["raw_score"], got["band"]) == ("academic", None, None)

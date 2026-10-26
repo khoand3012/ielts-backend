@@ -131,15 +131,22 @@ async def get_version(db: AsyncSession, ts: TestSession) -> TestVersion:
     return version
 
 
-async def tests_for(db: AsyncSession, sessions: list[TestSession]) -> dict[uuid.UUID, Test]:
+@dataclass(frozen=True)
+class SessionTest:
+    test: Test
+    # the module of the session's own version (Reading only)
+    module: str | None
+
+
+async def tests_for(db: AsyncSession, sessions: list[TestSession]) -> dict[uuid.UUID, SessionTest]:
     """The test each session belongs to, keyed by session id, in one query."""
     version_ids = {ts.test_version_id for ts in sessions}
     rows = await db.execute(
-        select(TestVersion.id, Test)
+        select(TestVersion.id, TestVersion.module, Test)
         .join(Test, Test.id == TestVersion.test_id)
         .where(TestVersion.id.in_(version_ids))
     )
-    by_version = {version_id: test for version_id, test in rows.tuples()}
+    by_version = {version_id: SessionTest(test, module) for version_id, module, test in rows}
     return {ts.id: by_version[ts.test_version_id] for ts in sessions}
 
 

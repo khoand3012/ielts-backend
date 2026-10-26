@@ -112,16 +112,35 @@ async def publish(db: AsyncSession, version_id: uuid.UUID) -> TestVersion:
 
 
 async def list_published(
-    db: AsyncSession, *, skill: Skill | None = None, limit: int = 50, offset: int = 0
+    db: AsyncSession,
+    *,
+    skill: Skill | None = None,
+    module: Module | None = None,
+    limit: int = 50,
+    offset: int = 0,
 ) -> tuple[list[Test], int]:
     stmt = select(Test).where(Test.current_version_id.is_not(None))
     if skill is not None:
         stmt = stmt.where(Test.skill == skill)
+    if module is not None:
+        stmt = stmt.join(TestVersion, TestVersion.id == Test.current_version_id).where(
+            TestVersion.module == module
+        )
     total = await db.scalar(select(func.count()).select_from(stmt.subquery()))
     page = await db.scalars(
         stmt.order_by(Test.created_at.desc(), Test.id.desc()).limit(limit).offset(offset)
     )
     return list(page), total or 0
+
+
+async def modules_for(db: AsyncSession, tests: list[Test]) -> dict[uuid.UUID, str | None]:
+    """The module of each test's current published version, keyed by test id."""
+    rows = await db.execute(
+        select(Test.id, TestVersion.module)
+        .join(TestVersion, TestVersion.id == Test.current_version_id)
+        .where(Test.id.in_([t.id for t in tests]))
+    )
+    return dict(rows.tuples().all())
 
 
 async def get_published_test(db: AsyncSession, test_id: uuid.UUID) -> Test:
