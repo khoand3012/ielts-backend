@@ -19,6 +19,7 @@ from core.exceptions import (
 from core.models import (
     Answer,
     GradingMethod,
+    Module,
     SessionMode,
     SessionStatus,
     Skill,
@@ -29,7 +30,7 @@ from core.models import (
     User,
 )
 from core.schemas.session import AnswerInput
-from core.services import catalog, storage
+from core.services import auto_grading, catalog, storage
 from core.services.content import ItemSpec, item_index
 from core.services.entitlements import check_and_consume
 from core.settings import get_settings
@@ -280,10 +281,36 @@ async def set_manual_grading(
     return ts
 
 
+def mark_session(
+    ts: TestSession, version: TestVersion, answers: dict[int, Any]
+) -> auto_grading.Score:
+    """Score a Reading/Listening session against its own version's key and module."""
+    skill = Skill(ts.skill)
+    return auto_grading.score(
+        skill,
+        Module(version.module) if version.module else None,
+        SessionMode(ts.mode),
+        item_index(skill, catalog.load_content(skill, version)),
+        catalog.load_answer_key(version),
+        answers,
+    )
+
+
 async def on_session_submitted(db: AsyncSession, ts: TestSession) -> None:
-    """Runs once per submitted session, inside the submitting transaction. Grading phases
-    (auto-grading, AI, human) hook in here."""
-    return None
+    """Runs once per submitted session, inside the submitting transaction. Reading and
+    Listening are scored here; the AI and human grading phases hook in here too."""
+    if ts.grading_method != GradingMethod.AUTO:
+        return
+    version = await get_version(db, ts)
+    answers = await get_answers(db, ts)
+    try:
+        result = mark_session(ts, version, answers)
+    except Exception:
+        # A scoring bug must never block a submission; the startup sweep scores it later.
+        log.exception("auto_grading_failed", session_id=str(ts.id))
+        return
+    ts.raw_score = result.raw_score
+    ts.band = result.band
 
 
 _GRADING_METHOD = case(
