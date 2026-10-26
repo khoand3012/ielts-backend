@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import CurrentUser, DbSession
-from core.models import TestSession
+from core.models import GradingMethod, TestSession
 from core.schemas.session import (
     AnswersRequest,
     AnswersResponse,
@@ -130,6 +130,7 @@ def _question(item: auto_grading.MarkedItem) -> ResultQuestion:
 def _result(
     ts: TestSession, info: sessions.SessionTest, score: auto_grading.Score | None
 ) -> SessionResult:
+    graded = ts.grading_method == GradingMethod.AUTO and ts.raw_score is not None
     return SessionResult(
         session_id=ts.id,
         test_id=info.test.id,
@@ -142,11 +143,11 @@ def _result(
         started_at=ts.started_at,
         submitted_at=ts.submitted_at,
         time_spent_seconds=sessions.time_spent_seconds(ts),
-        status="graded" if score else "being_graded",
+        status="graded" if graded else "being_graded",
         # the stored total, so the result always matches the session list
-        raw_score=ts.raw_score if score else None,
+        raw_score=ts.raw_score if graded else None,
         max_score=score.max_score if score else None,
-        band=ts.band if score else None,
+        band=ts.band if graded else None,
         answered=score.answered if score else None,
         questions=[_question(i) for i in score.items] if score else None,
     )

@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -202,3 +203,63 @@ async def test_openapi_has_result_route(app_client: AsyncClient) -> None:
     op = spec["paths"]["/sessions/{session_id}/result"]["get"]
     assert op["operationId"] == "get_session_result"
     assert op["tags"] == ["sessions"]
+
+
+class RecordingLog:
+    def __init__(self) -> None:
+        self.events: list[tuple[str, dict[str, Any]]] = []
+
+    def exception(self, event: str, **kw: Any) -> None:
+        self.events.append((event, kw))
+
+    def warning(self, event: str, **kw: Any) -> None:
+        self.events.append((event, kw))
+
+
+async def test_result_survives_marking_failure_on_read(
+    app_client: AsyncClient,
+    db_session: AsyncSession,
+    make_user: MakeUser,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def boom(row: TestSession, version: TestVersion, answers: dict[int, Any]) -> Any:
+        raise RuntimeError("marking bug after a deploy")
+
+    user, tok = await make_user()
+    full = dict(correct_answers(Skill.READING))
+    ts = await start(db_session, user, Skill.READING, answers=full)
+    await sessions.submit_session(db_session, user, ts.id, NOW)
+    log = RecordingLog()
+    monkeypatch.setattr(sessions, "mark_session", boom)
+    monkeypatch.setattr(sessions, "log", log)
+
+    body = await result(app_client, tok, ts)
+    assert (body["status"], body["raw_score"], body["band"]) == ("graded", 40, 9.0)
+    assert (body["questions"], body["answered"]) == (None, None)
+    assert [e for e, _ in log.events] == ["auto_grading_failed"]
+
+
+async def test_result_logs_drift_and_keeps_stored_total(
+    app_client: AsyncClient,
+    db_session: AsyncSession,
+    make_user: MakeUser,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user, tok = await make_user()
+    full = dict(correct_answers(Skill.READING))
+    ts = await start(db_session, user, Skill.READING, answers=full)
+    await sessions.submit_session(db_session, user, ts.id, NOW)
+    real = sessions.mark_session
+
+    def changed_rules(row: TestSession, version: TestVersion, answers: dict[int, Any]) -> Any:
+        return dataclasses.replace(real(row, version, answers), raw_score=39)
+
+    log = RecordingLog()
+    monkeypatch.setattr(sessions, "mark_session", changed_rules)
+    monkeypatch.setattr(sessions, "log", log)
+
+    body = await result(app_client, tok, ts)
+    assert (body["raw_score"], body["band"]) == (40, 9.0)
+    assert log.events == [
+        ("auto_grading_drift", {"session_id": str(ts.id), "stored": 40, "recomputed": 39})
+    ]

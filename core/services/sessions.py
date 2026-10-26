@@ -124,14 +124,30 @@ def time_spent_seconds(ts: TestSession) -> int:
 async def get_result(
     db: AsyncSession, user: User, session_id: uuid.UUID, now: datetime | None = None
 ) -> tuple[TestSession, auto_grading.Score | None]:
-    """The caller's submitted session, with its per-question marks when it has been scored.
-    The stored score is the total; the marks are recomputed with the same rules."""
+    """The caller's submitted session, with its per-question marks when it has been scored
+    (None if not scored, or if recomputing them fails). The stored score is the total; the
+    marks are recomputed with the current rules."""
     ts = await get_session(db, user, session_id, now)
     if ts.status == SessionStatus.IN_PROGRESS:
         raise ConflictError("session is not submitted yet")
     if ts.grading_method != GradingMethod.AUTO or ts.raw_score is None:
         return ts, None
-    return ts, mark_session(ts, await get_version(db, ts), await get_answers(db, ts))
+    version, answers = await get_version(db, ts), await get_answers(db, ts)
+    try:
+        score = mark_session(ts, version, answers)
+    except Exception:
+        # The stored score is still valid; show it without the per-question marks.
+        log.exception("auto_grading_failed", session_id=str(ts.id))
+        return ts, None
+    if score.raw_score != ts.raw_score:
+        # The rules changed since this session was scored: `regrade-auto --all` is due.
+        log.warning(
+            "auto_grading_drift",
+            session_id=str(ts.id),
+            stored=ts.raw_score,
+            recomputed=score.raw_score,
+        )
+    return ts, score
 
 
 async def list_sessions(
