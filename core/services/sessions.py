@@ -2,6 +2,7 @@
 
 import asyncio
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -386,3 +387,49 @@ async def run_auto_submit_loop(
         except Exception:
             log.exception("auto_submit_failed")
         await asyncio.sleep(interval_seconds)
+
+
+@dataclass(frozen=True)
+class RescoreCounts:
+    scored: int
+    failed: int
+
+
+async def rescore_sessions(
+    factory: async_sessionmaker[AsyncSession], *, everything: bool = False
+) -> RescoreCounts:
+    """Score submitted Reading/Listening sessions that have no score (or, with `everything`,
+    all of them), one transaction each so one bad session doesn't roll back the rest."""
+    which = select(TestSession.id).where(
+        TestSession.status == SessionStatus.SUBMITTED,
+        TestSession.grading_method == GradingMethod.AUTO,
+    )
+    if not everything:
+        which = which.where(TestSession.raw_score.is_(None))
+    async with factory() as db:
+        ids = list(await db.scalars(which.order_by(TestSession.id)))
+    scored = failed = 0
+    for session_id in ids:
+        try:
+            async with factory() as db:
+                ts = await db.get(TestSession, session_id)
+                assert ts is not None
+                result = mark_session(ts, await get_version(db, ts), await get_answers(db, ts))
+                ts.raw_score = result.raw_score
+                ts.band = result.band
+                await db.commit()
+            scored += 1
+        except Exception:
+            log.exception("auto_grading_failed", session_id=str(session_id))
+            failed += 1
+    return RescoreCounts(scored, failed)
+
+
+async def run_startup_scoring(factory: async_sessionmaker[AsyncSession]) -> None:
+    """Score what a scoring bug left unscored. A fix only ships with a deploy, and a deploy
+    restarts the app, so the fix and the re-score arrive together. Never raises."""
+    try:
+        counts = await rescore_sessions(factory)
+        log.info("startup_scoring_done", scored=counts.scored, failed=counts.failed)
+    except Exception:
+        log.exception("startup_scoring_failed")

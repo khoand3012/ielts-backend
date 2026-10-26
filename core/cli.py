@@ -2,6 +2,7 @@
 
 - ``python -m core.cli set-role <email> <role>``
 - ``python -m core.cli load-test <file.json> [--publish]``
+- ``python -m core.cli regrade-auto [--all]``
 """
 
 import argparse
@@ -16,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from core.db import async_session_factory
 from core.exceptions import NotFoundError, ValidationAppError
 from core.models import Role
+from core.services.sessions import rescore_sessions
 from core.services.test_loader import load_test_file
 from core.services.users import set_role_by_email
 
@@ -33,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
     load_test = commands.add_parser("load-test", help="load a test from a JSON file as a draft")
     load_test.add_argument("path", type=Path)
     load_test.add_argument("--publish", action="store_true", help="publish it if it has no errors")
+    regrade = commands.add_parser(
+        "regrade-auto", help="score Reading/Listening sessions that have no score"
+    )
+    regrade.add_argument(
+        "--all", action="store_true", help="re-score every session, overwriting stored scores"
+    )
     return parser
 
 
@@ -43,6 +51,8 @@ async def run(
     args = build_parser().parse_args(argv)
     if args.command == "load-test":
         return await _load_test(args.path, args.publish, session_factory)
+    if args.command == "regrade-auto":
+        return await _regrade_auto(args.all, session_factory)
     return await _set_role(args.email, args.role, session_factory)
 
 
@@ -77,6 +87,15 @@ async def _load_test(
     for p in result.problems:
         print(f"{p.severity} {p.code} section={p.section} question={p.question}: {p.message}")
     return 1 if publish and not result.published else 0
+
+
+async def _regrade_auto(everything: bool, session_factory: async_sessionmaker[AsyncSession]) -> int:
+    counts = await rescore_sessions(session_factory, everything=everything)
+    print(f"scored {counts.scored} sessions")
+    if counts.failed:
+        print(f"failed to score {counts.failed} sessions (see log)", file=sys.stderr)
+        return 1
+    return 0
 
 
 def main() -> None:

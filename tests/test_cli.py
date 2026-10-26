@@ -1,6 +1,7 @@
 import json
 import uuid
 from pathlib import Path
+from typing import Any
 
 import pytest
 from httpx import AsyncClient
@@ -8,9 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from uuid_utils.compat import uuid7
 
 from core.cli import build_parser, run
-from core.models import User
-from core.services import auth
+from core.models import SessionMode, Skill, TestSession, TestVersion, User
+from core.services import auth, sessions
+from core.services.sessions import RescoreCounts
 from tests.content_factories import listening_content, listening_key, reading_content, reading_key
+from tests.helpers import publish_test
+
+
+class _SilentLog:
+    def exception(self, event: str, **kw: Any) -> None:
+        return None
 
 
 async def test_cli_sets_role(_engine: AsyncEngine, capsys: pytest.CaptureFixture[str]) -> None:
@@ -121,3 +129,49 @@ async def test_cli_load_test_invalid_file(
     factory = async_sessionmaker(_engine, expire_on_commit=False)
     assert await run(["load-test", str(path)], factory) == 1
     assert "invalid test file" in capsys.readouterr().err
+
+
+async def test_cli_regrade_auto(
+    _engine: AsyncEngine,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def boom(row: TestSession, version: TestVersion, answers: dict[int, Any]) -> Any:
+        raise RuntimeError("marking bug")
+
+    factory = async_sessionmaker(_engine, expire_on_commit=False)
+    async with factory() as session:
+        user = await auth.register(session, f"cli-{uuid7()}@t.com", "password123")
+        v = await publish_test(session, Skill.READING)
+        ts = await sessions.start_session(session, user, v.test_id, SessionMode.EXAM)
+        with monkeypatch.context() as m:
+            m.setattr(sessions, "mark_session", boom)
+            m.setattr(sessions, "log", _SilentLog())
+            await sessions.submit_session(session, user, ts.id)
+
+    assert await run(["regrade-auto"], factory) == 0
+    assert "scored" in capsys.readouterr().out
+    async with factory() as session:
+        row = await session.get(TestSession, ts.id)
+        assert row is not None
+        assert row.raw_score == 0
+
+
+async def test_cli_regrade_auto_failure_exit_code(
+    _engine: AsyncEngine,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[bool] = []
+
+    async def fake(factory: Any, *, everything: bool = False) -> RescoreCounts:
+        calls.append(everything)
+        return RescoreCounts(scored=2, failed=1)
+
+    monkeypatch.setattr("core.cli.rescore_sessions", fake)
+    factory = async_sessionmaker(_engine, expire_on_commit=False)
+    assert await run(["regrade-auto", "--all"], factory) == 1
+    assert calls == [True]
+    out = capsys.readouterr()
+    assert "scored 2 sessions" in out.out
+    assert "failed to score 1 sessions" in out.err
