@@ -151,3 +151,16 @@ def test_asset_keys_lists_audio_and_images() -> None:
     assert asset_keys(Skill.WRITING, wc) == ["tests/f/task1.svg"]
     sc = parse_content(Skill.SPEAKING, speaking_content())
     assert asset_keys(Skill.SPEAKING, sc) == ["tests/f/q2.mp3"]
+
+
+def test_multi_number_text_item_is_an_error() -> None:
+    c = reading_content()
+    fill = c["passages"][0]["question_groups"][1]
+    assert fill["type"] == "fill_blank"
+    fill["questions"] = [{"numbers": [8, 9], "prompt": "gaps"}, *fill["questions"][2:]]
+    key = reading_key()
+    del key[9]
+    problems = validate_version(Skill.READING, parse_content(Skill.READING, c), key)
+    assert [(p.code, p.question, p.severity) for p in problems] == [
+        ("multi_number_item", 8, "error")
+    ]

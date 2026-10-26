@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exceptions import ContentProblemsError, ValidationAppError
-from core.models import Skill, TestVersion
+from core.models import Module, Skill, TestVersion
 from core.schemas.content import Problem, StaffContent
 from core.services import catalog, storage
 from core.services.content import asset_keys, parse_content
@@ -25,6 +25,8 @@ class TestFile(BaseModel):
     slug: str = Field(pattern=r"^[a-z0-9-]+$", max_length=100)
     title: str = Field(max_length=200)
     skill: Skill
+    # Reading only: academic | general_training
+    module: Module | None = None
     content: dict[str, Any]
     answer_key: dict[int, list[str]] = {}
     staff_content: dict[str, Any] = {}
@@ -75,6 +77,7 @@ async def load_test_file(
         staff_content = StaffContent.model_validate(file.staff_content)
     except (OSError, ValueError, ValidationError) as exc:
         raise ValidationAppError(f"invalid test file {path}: {exc}") from exc
+    catalog.check_module(file.skill, file.module)
 
     for key in asset_keys(file.skill, content):
         if key not in file.assets:
@@ -99,6 +102,7 @@ async def load_test_file(
         content=content,
         answer_key=file.answer_key,
         staff_content=staff_content,
+        module=file.module,
     )
     problems = catalog.problems_for(file.skill, version)
     published = False

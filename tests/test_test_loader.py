@@ -34,7 +34,15 @@ def write(tmp_path: Path, data: dict[str, Any]) -> Path:
 
 
 def make_file(skill: str, content: dict[str, Any], **extra: Any) -> dict[str, Any]:
-    return {"slug": f"load-{uuid7()}", "title": "T", "skill": skill, "content": content, **extra}
+    module = {"module": "academic"} if skill == "reading" else {}
+    return {
+        "slug": f"load-{uuid7()}",
+        "title": "T",
+        "skill": skill,
+        "content": content,
+        **module,
+        **extra,
+    }
 
 
 async def test_load_publishes_valid_reading(db_session: AsyncSession, tmp_path: Path) -> None:
@@ -127,3 +135,36 @@ async def test_seed_files_load(db_session: AsyncSession, tmp_path: Path) -> None
         else:
             assert result.problems == [], (skill, result.problems)
             assert result.published is True
+        assert result.version.module == ("academic" if skill == "reading" else None)
+
+
+async def test_load_reading_without_module_rejected(
+    db_session: AsyncSession, tmp_path: Path
+) -> None:
+    data = make_file("reading", reading_content(), answer_key=reading_key())
+    del data["module"]
+    upload = FakeUploader()
+    with pytest.raises(ValidationAppError):
+        await load_test_file(db_session, write(tmp_path, data), publish=True, upload=upload)
+    assert upload.calls == []
+
+
+async def test_load_writing_with_module_rejected(db_session: AsyncSession, tmp_path: Path) -> None:
+    (tmp_path / "chart.svg").write_text("<svg/>", encoding="utf-8")
+    data = make_file(
+        "writing", writing_content(), module="academic", assets={"tests/f/task1.svg": "chart.svg"}
+    )
+    upload = FakeUploader()
+    with pytest.raises(ValidationAppError):
+        await load_test_file(db_session, write(tmp_path, data), publish=True, upload=upload)
+    assert upload.calls == []
+
+
+async def test_load_stores_module(db_session: AsyncSession, tmp_path: Path) -> None:
+    data = make_file(
+        "reading", reading_content(), answer_key=reading_key(), module="general_training"
+    )
+    result = await load_test_file(
+        db_session, write(tmp_path, data), publish=True, upload=FakeUploader()
+    )
+    assert result.version.module == "general_training"

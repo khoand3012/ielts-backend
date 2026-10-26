@@ -4,8 +4,8 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid_utils.compat import uuid7
 
-from core.exceptions import ConflictError, ContentProblemsError, NotFoundError
-from core.models import Skill, Test, TestVersion
+from core.exceptions import ConflictError, ContentProblemsError, NotFoundError, ValidationAppError
+from core.models import Module, Skill, Test, TestVersion
 from core.schemas.content import AnswerKey, StaffContent
 from core.services import catalog
 from core.services.content import parse_content
@@ -33,6 +33,7 @@ async def save(
         content=parse_content(skill, content or reading_content()),
         answer_key=reading_key() if key is None else key,
         staff_content=StaffContent(),
+        module=Module.ACADEMIC if skill == Skill.READING else None,
     )
 
 
@@ -119,3 +120,16 @@ async def test_skill_change_for_slug_rejected(db_session: AsyncSession) -> None:
     await save(db_session, s)
     with pytest.raises(ConflictError):
         await save(db_session, s, Skill.LISTENING, listening_content(), listening_key())
+
+
+async def test_save_draft_checks_module(db_session: AsyncSession) -> None:
+    with pytest.raises(ValidationAppError):
+        await catalog.save_draft(
+            db_session,
+            slug=slug(),
+            title="T",
+            skill=Skill.READING,
+            content=parse_content(Skill.READING, reading_content()),
+            answer_key=reading_key(),
+            staff_content=StaffContent(),
+        )
