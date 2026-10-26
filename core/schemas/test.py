@@ -2,7 +2,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from core.models import Skill
+from core.models import Module, Skill
 
 
 class TestSummary(BaseModel):
@@ -12,6 +12,8 @@ class TestSummary(BaseModel):
     skill: Skill
     title: str
     exam_time_limit_minutes: int
+    # Reading only: academic | general_training
+    module: Module | None
 
 
 class TestListResponse(BaseModel):

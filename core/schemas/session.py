@@ -1,10 +1,14 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from decimal import Decimal
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PlainSerializer
 
-from core.models import GradingMethod, SessionMode, SessionStatus, Skill, SubmitReason
+from core.models import GradingMethod, Module, SessionMode, SessionStatus, Skill, SubmitReason
+
+# Bands are Decimal in Python and a plain JSON number (7.0) in the API; halves are exact floats.
+Band = Annotated[Decimal, PlainSerializer(float, return_type=float, when_used="json")]
 
 
 class AnswerInput(BaseModel):
@@ -44,6 +48,11 @@ class SessionRead(BaseModel):
     submit_reason: SubmitReason | None
     request_manual_grading: bool
     grading_method: GradingMethod | None
+    # Reading only
+    module: Module | None
+    # Reading/Listening, once scored; a partial practice attempt has a mark but no band
+    raw_score: int | None
+    band: Band | None
     server_time: datetime
 
 
