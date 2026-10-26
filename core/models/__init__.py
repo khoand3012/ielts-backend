@@ -2,6 +2,7 @@ from core.models.base import Base
 from core.models.daily_usage import DailyUsage
 from core.models.enums import (
     GradingMethod,
+    Module,
     SessionMode,
     SessionStatus,
     Skill,
@@ -18,6 +19,7 @@ __all__ = [
     "Base",
     "DailyUsage",
     "GradingMethod",
+    "Module",
     "Plan",
     "RefreshToken",
     "Role",
